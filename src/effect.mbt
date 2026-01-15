@@ -71,9 +71,8 @@ pub fn effect(fn_ : () -> Unit) -> () -> Unit {
       cleanups[i]()
     }
     cleanups.clear()
-    match dispose_ref.val {
-      Some(d) => d()
-      None => ()
+    if dispose_ref.val is Some(d) {
+      d()
     }
   }
 
@@ -98,9 +97,8 @@ pub fn effect_once(fn_ : () -> Unit) -> Unit {
     render_effect(fn() {
       fn_()
       // Dispose after first run
-      match dispose.val {
-        Some(d) => d()
-        None => ()
+      if dispose.val is Some(d) {
+        d()
       }
     }),
   )

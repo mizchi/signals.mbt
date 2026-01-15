@@ -3,12 +3,8 @@
 ///|
 test "bench: signal get/set" (b : @bench.T) {
   let sig = signal(0)
-  b.bench(name="signal_set", fn() {
-    sig.set(1)
-  })
-  b.bench(name="signal_get", fn() {
-    b.keep(sig.get())
-  })
+  b.bench(name="signal_set", fn() { sig.set(1) })
+  b.bench(name="signal_get", fn() { b.keep(sig.get()) })
 }
 
 ///|
@@ -19,11 +15,7 @@ test "bench: memo computation" (b : @bench.T) {
 
   // Warm up - ensure memo is initialized
   let _ = sum()
-
-  b.bench(name="memo_cached", fn() {
-    b.keep(sum())
-  })
-
+  b.bench(name="memo_cached", fn() { b.keep(sum()) })
   b.bench(name="memo_recompute", fn() {
     a.set(a.peek() + 1)
     b.keep(sum())
@@ -38,11 +30,7 @@ test "bench: render_effect" (b : @bench.T) {
     let _ = sig.get()
     counter.val = counter.val + 1
   })
-
-  b.bench(name="effect_trigger", fn() {
-    sig.set(sig.peek() + 1)
-  })
-
+  b.bench(name="effect_trigger", fn() { sig.set(sig.peek() + 1) })
   dispose()
   b.keep(counter.val)
 }
@@ -56,19 +44,16 @@ test "bench: batch vs non-batch" (b : @bench.T) {
     let _ = a.get() + b_sig.get()
     counter.val = counter.val + 1
   })
-
   b.bench(name="no_batch", fn() {
     a.set(a.peek() + 1)
     b_sig.set(b_sig.peek() + 1)
   })
-
   b.bench(name="with_batch", fn() {
     batch(fn() {
       a.set(a.peek() + 1)
       b_sig.set(b_sig.peek() + 1)
     })
   })
-
   dispose()
   b.keep(counter.val)
 }
@@ -83,11 +68,7 @@ test "bench: deep dependency chain" (b : @bench.T) {
 
   // Warm up
   let _ = m4()
-
-  b.bench(name="deep_chain_read", fn() {
-    b.keep(m4())
-  })
-
+  b.bench(name="deep_chain_read", fn() { b.keep(m4()) })
   b.bench(name="deep_chain_update", fn() {
     source.set(source.peek() + 1)
     b.keep(m4())
@@ -102,15 +83,14 @@ test "bench: many subscribers" (b : @bench.T) {
 
   // Create 100 effects subscribing to the same signal
   for i = 0; i < 100; i = i + 1 {
-    disposers.push(render_effect(fn() {
-      let _ = sig.get()
-      counter.val = counter.val + 1
-    }))
+    disposers.push(
+      render_effect(fn() {
+        let _ = sig.get()
+        counter.val = counter.val + 1
+      }),
+    )
   }
-
-  b.bench(name="notify_100_subscribers", fn() {
-    sig.set(sig.peek() + 1)
-  })
+  b.bench(name="notify_100_subscribers", fn() { sig.set(sig.peek() + 1) })
 
   // Cleanup
   for i = 0; i < disposers.length(); i = i + 1 {

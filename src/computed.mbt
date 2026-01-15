@@ -29,11 +29,8 @@ pub fn[T] Computed::get(self : Computed[T]) -> T {
   }
   if is_dirty || deps_changed {
     // Recompute
-    if update_computed(self) {
-      match self.node.subs {
-        Some(subs) => shallow_propagate(subs)
-        None => ()
-      }
+    if update_computed(self) && self.node.subs is Some(subs) {
+      shallow_propagate(subs)
     }
   } else if is_pending {
     // Clear pending flag if deps not dirty
@@ -49,9 +46,8 @@ pub fn[T] Computed::get(self : Computed[T]) -> T {
   }
 
   // Track dependency
-  match get_active_sub() {
-    Some(sub) => link(self.node, sub, get_cycle())
-    None => ()
+  if get_active_sub() is Some(sub) {
+    link(self.node, sub, get_cycle())
   }
   match self.value {
     Some(v) => v
@@ -90,27 +86,22 @@ fn check_deps_dirty(node : ReactiveNode) -> Bool {
   let dirty_flag = ReactiveFlags::Dirty.to_int()
   let pending_flag = ReactiveFlags::Pending.to_int()
   let mutable_flag = ReactiveFlags::Mutable.to_int()
-  let link_ref : Ref[Link?] = Ref::new(node.deps)
-  while not(link_ref.val is None) {
-    match link_ref.val {
-      Some(lnk) => {
-        let dep = lnk.dep
-        let dep_flags = dep.flags.get_value()
-        if (dep_flags & mutable_flag) != 0 {
-          // Check if dep was modified after this link was created
-          // This handles diamond dependencies where dirty flag may be cleared
-          if dep.last_modified_cycle > lnk.version {
-            return true
-          }
-          // Also check traditional dirty/pending flags
-          if (dep_flags & (dirty_flag | pending_flag)) != 0 {
-            return true
-          }
-        }
-        link_ref.val = lnk.next_dep
+  let mut current_link = node.deps
+  while current_link is Some(lnk) {
+    let dep = lnk.dep
+    let dep_flags = dep.flags.get_value()
+    if (dep_flags & mutable_flag) != 0 {
+      // Check if dep was modified after this link was created
+      // This handles diamond dependencies where dirty flag may be cleared
+      if dep.last_modified_cycle > lnk.version {
+        return true
       }
-      None => ()
+      // Also check traditional dirty/pending flags
+      if (dep_flags & (dirty_flag | pending_flag)) != 0 {
+        return true
+      }
     }
+    current_link = lnk.next_dep
   }
   false
 }

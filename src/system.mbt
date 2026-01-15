@@ -130,19 +130,20 @@ pub fn link(dep : ReactiveNode, sub : ReactiveNode, version : Int) -> Unit {
 
   // Update sub's dep list
   sub.deps_tail = Some(new_link)
-  match next_dep {
-    Some(nd) => nd.prev_dep = Some(new_link)
-    None => ()
+  if next_dep is Some(nd) {
+    nd.prev_dep = Some(new_link)
   }
-  match prev_dep {
-    Some(pd) => pd.next_dep = Some(new_link)
-    None => sub.deps = Some(new_link)
+  if prev_dep is Some(pd) {
+    pd.next_dep = Some(new_link)
+  } else {
+    sub.deps = Some(new_link)
   }
 
   // Update dep's sub list
-  match new_link.prev_sub {
-    Some(ps) => ps.next_sub = Some(new_link)
-    None => dep.subs = Some(new_link)
+  if new_link.prev_sub is Some(ps) {
+    ps.next_sub = Some(new_link)
+  } else {
+    dep.subs = Some(new_link)
   }
   dep.subs_tail = Some(new_link)
 }
@@ -157,28 +158,30 @@ pub fn unlink(lnk : Link, sub : ReactiveNode) -> Link? {
   let prev_sub = lnk.prev_sub
 
   // Update sub's dep list
-  match next_dep {
-    Some(nd) => nd.prev_dep = prev_dep
-    None => sub.deps_tail = prev_dep
+  if next_dep is Some(nd) {
+    nd.prev_dep = prev_dep
+  } else {
+    sub.deps_tail = prev_dep
   }
-  match prev_dep {
-    Some(pd) => pd.next_dep = next_dep
-    None => sub.deps = next_dep
+  if prev_dep is Some(pd) {
+    pd.next_dep = next_dep
+  } else {
+    sub.deps = next_dep
   }
 
   // Update dep's sub list
-  match next_sub {
-    Some(ns) => ns.prev_sub = prev_sub
-    None => dep.subs_tail = prev_sub
+  if next_sub is Some(ns) {
+    ns.prev_sub = prev_sub
+  } else {
+    dep.subs_tail = prev_sub
   }
-  match prev_sub {
-    Some(ps) => ps.next_sub = next_sub
-    None => {
-      dep.subs = next_sub
-      // If no more subscribers, call unwatched
-      if next_sub is None {
-        unwatched(dep)
-      }
+  if prev_sub is Some(ps) {
+    ps.next_sub = next_sub
+  } else {
+    dep.subs = next_sub
+    // If no more subscribers, call unwatched
+    if next_sub is None {
+      unwatched(dep)
     }
   }
   next_dep
@@ -192,18 +195,13 @@ fn unwatched(node : ReactiveNode) -> Unit {
   if not(is_mutable) {
     // Effect scope - clean up
     cleanup_node(node)
-  } else {
+  } else if node.deps_tail is Some(_) {
     // Computed - mark as lazy again
-    match node.deps_tail {
-      Some(_) => {
-        node.deps_tail = None
-        node.flags.set_value(
-          ReactiveFlags::Mutable.to_int() | ReactiveFlags::Dirty.to_int(),
-        )
-        purge_deps(node)
-      }
-      None => ()
-    }
+    node.deps_tail = None
+    node.flags.set_value(
+      ReactiveFlags::Mutable.to_int() | ReactiveFlags::Dirty.to_int(),
+    )
+    purge_deps(node)
   }
 }
 
@@ -213,30 +211,21 @@ fn cleanup_node(node : ReactiveNode) -> Unit {
   node.deps_tail = None
   node.flags.set_value(ReactiveFlags::None.to_int())
   purge_deps(node)
-  match node.subs {
-    Some(sub) => {
-      let _ = unlink(sub, sub.sub)
+  if node.subs is Some(sub) {
+    let _ = unlink(sub, sub.sub)
 
-    }
-    None => ()
   }
 }
 
 ///|
 /// Purge unused deps after deps_tail
 pub fn purge_deps(sub : ReactiveNode) -> Unit {
-  let deps_tail = sub.deps_tail
-  let dep_ref : Ref[Link?] = Ref::new(
-    match deps_tail {
-      Some(dt) => dt.next_dep
-      None => sub.deps
-    },
-  )
-  while not(dep_ref.val is None) {
-    match dep_ref.val {
-      Some(d) => dep_ref.val = unlink(d, sub)
-      None => ()
-    }
+  let mut current_dep = match sub.deps_tail {
+    Some(dt) => dt.next_dep
+    None => sub.deps
+  }
+  while current_dep is Some(d) {
+    current_dep = unlink(d, sub)
   }
 }
 
@@ -346,17 +335,12 @@ pub fn propagate(start_link : Link) -> Unit {
 ///|
 /// Check if link is valid for the subscriber
 fn is_valid_link(check_link : Link, sub : ReactiveNode) -> Bool {
-  let link_ref : Ref[Link?] = Ref::new(sub.deps_tail)
-  while not(link_ref.val is None) {
-    match link_ref.val {
-      Some(l) => {
-        if physical_equal(l, check_link) {
-          return true
-        }
-        link_ref.val = l.prev_dep
-      }
-      None => ()
+  let mut current_link = sub.deps_tail
+  while current_link is Some(l) {
+    if physical_equal(l, check_link) {
+      return true
     }
+    current_link = l.prev_dep
   }
   false
 }
@@ -364,26 +348,21 @@ fn is_valid_link(check_link : Link, sub : ReactiveNode) -> Bool {
 ///|
 /// Shallow propagate - mark direct subscribers as dirty
 pub fn shallow_propagate(start_link : Link) -> Unit {
-  let link_ref : Ref[Link?] = Ref::new(Some(start_link))
-  while not(link_ref.val is None) {
-    match link_ref.val {
-      Some(lnk) => {
-        let sub = lnk.sub
-        let flags = sub.flags.get_value()
-        let pending_flag = ReactiveFlags::Pending.to_int()
-        let dirty_flag = ReactiveFlags::Dirty.to_int()
-        let watching_flag = ReactiveFlags::Watching.to_int()
-        let recursed_check_flag = ReactiveFlags::RecursedCheck.to_int()
-        if (flags & (pending_flag | dirty_flag)) == pending_flag {
-          sub.flags.set_value(flags | dirty_flag)
-          if (flags & (watching_flag | recursed_check_flag)) == watching_flag {
-            notify_effect(sub)
-          }
-        }
-        link_ref.val = lnk.next_sub
+  let mut current_link : Link? = Some(start_link)
+  while current_link is Some(lnk) {
+    let sub = lnk.sub
+    let flags = sub.flags.get_value()
+    let pending_flag = ReactiveFlags::Pending.to_int()
+    let dirty_flag = ReactiveFlags::Dirty.to_int()
+    let watching_flag = ReactiveFlags::Watching.to_int()
+    let recursed_check_flag = ReactiveFlags::RecursedCheck.to_int()
+    if (flags & (pending_flag | dirty_flag)) == pending_flag {
+      sub.flags.set_value(flags | dirty_flag)
+      if (flags & (watching_flag | recursed_check_flag)) == watching_flag {
+        notify_effect(sub)
       }
-      None => ()
     }
+    current_link = lnk.next_sub
   }
 }
 
@@ -398,37 +377,28 @@ pub fn check_dirty(
   sub : ReactiveNode,
   update_fn : (ReactiveNode) -> Bool,
 ) -> Bool {
-  let link_ref : Ref[Link?] = Ref::new(Some(start_link))
+  let mut current_link : Link? = Some(start_link)
   let dirty_flag = ReactiveFlags::Dirty.to_int()
   let mutable_flag = ReactiveFlags::Mutable.to_int()
-  while not(link_ref.val is None) {
-    match link_ref.val {
-      Some(lnk) => {
-        let dep = lnk.dep
-        let flags = dep.flags.get_value()
+  while current_link is Some(lnk) {
+    let dep = lnk.dep
+    let flags = dep.flags.get_value()
 
-        // Check if sub is dirty
-        if (sub.flags.get_value() & dirty_flag) != 0 {
-          return true
-        }
-
-        // Dep is mutable and dirty - update it
-        if (flags & (mutable_flag | dirty_flag)) == (mutable_flag | dirty_flag) {
-          if update_fn(dep) {
-            match dep.subs {
-              Some(subs) =>
-                if subs.next_sub is Some(_) {
-                  shallow_propagate(subs)
-                }
-              None => ()
-            }
-            return true
-          }
-        }
-        link_ref.val = lnk.next_dep
-      }
-      None => ()
+    // Check if sub is dirty
+    if (sub.flags.get_value() & dirty_flag) != 0 {
+      return true
     }
+
+    // Dep is mutable and dirty - update it
+    if (flags & (mutable_flag | dirty_flag)) == (mutable_flag | dirty_flag) {
+      if update_fn(dep) {
+        if dep.subs is Some(subs) && subs.next_sub is Some(_) {
+          shallow_propagate(subs)
+        }
+        return true
+      }
+    }
+    current_link = lnk.next_dep
   }
   false
 }
@@ -440,23 +410,20 @@ pub fn check_dirty(
 ///|
 /// Notify an effect - queue it for execution
 fn notify_effect(node : ReactiveNode) -> Unit {
-  match node.effect_callback {
-    Some(callback) => {
-      // Check if already queued (avoid duplicates)
-      let mut already_queued = false
-      for n in callback_queue_nodes {
-        if physical_equal(n, node) {
-          already_queued = true
-          break
-        }
-      }
-      if not(already_queued) {
-        callback_queue.push(callback)
-        callback_queue_nodes.push(node)
-        node.flags.unset(Watching)
+  if node.effect_callback is Some(callback) {
+    // Check if already queued (avoid duplicates)
+    let mut already_queued = false
+    for n in callback_queue_nodes {
+      if physical_equal(n, node) {
+        already_queued = true
+        break
       }
     }
-    None => ()
+    if not(already_queued) {
+      callback_queue.push(callback)
+      callback_queue_nodes.push(node)
+      node.flags.unset(Watching)
+    }
   }
 }
 

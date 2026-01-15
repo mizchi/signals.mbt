@@ -22,33 +22,26 @@ pub fn[T] CoreSignal::get(self : CoreSignal[T]) -> T {
   if (flags & dirty_flag) != 0 {
     if not(physical_equal(self.current_value, self.pending_value)) {
       self.current_value = self.pending_value
-      match self.node.subs {
-        Some(subs) => shallow_propagate(subs)
-        None => ()
+      if self.node.subs is Some(subs) {
+        shallow_propagate(subs)
       }
     }
     self.node.flags.set_value(ReactiveFlags::Mutable.to_int())
   }
 
   // Track dependency
-  let sub = get_active_sub()
-  let mut found_sub = sub
-  while found_sub is Some(_) {
-    match found_sub {
-      Some(s) => {
-        let sub_flags = s.flags.get_value()
-        let mutable_flag = ReactiveFlags::Mutable.to_int()
-        let watching_flag = ReactiveFlags::Watching.to_int()
-        if (sub_flags & (mutable_flag | watching_flag)) != 0 {
-          link(self.node, s, get_cycle())
-          break
-        }
-        found_sub = match s.subs {
-          Some(subs) => Some(subs.sub)
-          None => None
-        }
-      }
-      None => ()
+  let mut found_sub = get_active_sub()
+  while found_sub is Some(s) {
+    let sub_flags = s.flags.get_value()
+    let mutable_flag = ReactiveFlags::Mutable.to_int()
+    let watching_flag = ReactiveFlags::Watching.to_int()
+    if (sub_flags & (mutable_flag | watching_flag)) != 0 {
+      link(self.node, s, get_cycle())
+      break
+    }
+    found_sub = match s.subs {
+      Some(subs) => Some(subs.sub)
+      None => None
     }
   }
   self.current_value
@@ -66,14 +59,11 @@ pub fn[T] CoreSignal::set(self : CoreSignal[T], value : T) -> Unit {
     self.node.flags.set_value(
       ReactiveFlags::Mutable.to_int() | ReactiveFlags::Dirty.to_int(),
     )
-    match self.node.subs {
-      Some(subs) => {
-        propagate(subs)
-        if get_batch_depth() == 0 {
-          flush()
-        }
+    if self.node.subs is Some(subs) {
+      propagate(subs)
+      if get_batch_depth() == 0 {
+        flush()
       }
-      None => ()
     }
   }
 }
@@ -102,14 +92,9 @@ pub fn[T] CoreSignal::peek(self : CoreSignal[T]) -> T {
 pub fn[T] CoreSignal::subscriber_count(self : CoreSignal[T]) -> Int {
   let mut count = 0
   let mut lnk = self.node.subs
-  while lnk is Some(_) {
-    match lnk {
-      Some(l) => {
-        count = count + 1
-        lnk = l.next_sub
-      }
-      None => ()
-    }
+  while lnk is Some(l) {
+    count = count + 1
+    lnk = l.next_sub
   }
   count
 }
@@ -119,15 +104,10 @@ pub fn[T] CoreSignal::subscriber_count(self : CoreSignal[T]) -> Int {
 pub fn[T] CoreSignal::clear_subscribers(self : CoreSignal[T]) -> Unit {
   // Unlink all subs
   let mut lnk = self.node.subs
-  while lnk is Some(_) {
-    match lnk {
-      Some(l) => {
-        let next = l.next_sub
-        let _ = unlink(l, l.sub)
-        lnk = next
-      }
-      None => ()
-    }
+  while lnk is Some(l) {
+    let next = l.next_sub
+    let _ = unlink(l, l.sub)
+    lnk = next
   }
   self.node.subs = None
   self.node.subs_tail = None

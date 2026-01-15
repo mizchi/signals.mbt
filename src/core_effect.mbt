@@ -53,9 +53,8 @@ fn core_render_effect(fn_ : () -> Unit) -> () -> Unit {
   let prev_sub = set_active_sub(Some(node))
 
   // Link to parent effect if nested
-  match prev_sub {
-    Some(ps) => link(node, ps, 0)
-    None => ()
+  if prev_sub is Some(ps) {
+    link(node, ps, 0)
   }
 
   // Track cleanups during initial run
@@ -95,11 +94,8 @@ fn cleanup_effect_node(node : ReactiveNode) -> Unit {
   purge_deps(node)
 
   // Unlink from parent if any
-  match node.subs {
-    Some(sub) => {
-      let _ = unlink(sub, sub.sub)
+  if node.subs is Some(sub) {
+    let _ = unlink(sub, sub.sub)
 
-    }
-    None => ()
   }
 }

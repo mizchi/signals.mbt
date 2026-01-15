@@ -1,8 +1,24 @@
 # mizchi/signals
 
-MoonBit 向けの細粒度リアクティブシグナルライブラリ。[alien-signals](https://github.com/stackblitz/alien-signals) および [Solid.js](https://www.solidjs.com/) にインスパイアされています。
+Fine-grained reactive signals library for MoonBit. Inspired by [alien-signals](https://github.com/stackblitz/alien-signals) and [Solid.js](https://www.solidjs.com/).
 
-## インストール
+## What are Reactive Signals?
+
+Reactive signals provide a way to manage state that automatically tracks dependencies and propagates changes. When a signal's value changes, all computations and effects that depend on it are automatically updated.
+
+**Key benefits:**
+- **Automatic dependency tracking**: No need to manually specify what depends on what
+- **Efficient updates**: Only affected computations re-run when values change
+- **Composable**: Build complex reactive graphs from simple primitives
+
+**Use cases:**
+- **UI frameworks**: Automatically update views when data changes
+- **State management**: Manage application state with predictable updates
+- **Data pipelines**: Create derived values that stay in sync with source data
+- **Game development**: React to game state changes efficiently
+- **Real-time systems**: Propagate sensor/input changes through a system
+
+## Installation
 
 ```bash
 moon add mizchi/signals
@@ -12,27 +28,27 @@ moon add mizchi/signals
 
 ### Signal
 
-リアクティブな値を保持し、変更時に購読者へ通知します。
+Holds a reactive value and notifies subscribers when it changes.
 
 ```moonbit
 let count = signal(0)
 
-// 値の取得（effect 内では自動追跡）
+// Get value (auto-tracked inside effects)
 count.get()  // => 0
 
-// 値の設定
+// Set value
 count.set(5)
 
-// 関数で更新
+// Update with function
 count.update(fn(n) { n + 1 })
 
-// 追跡せずに取得（依存関係を作らない）
+// Get without tracking (doesn't create dependency)
 count.peek()
 ```
 
 ### memo / computed
 
-依存関係が変更されたときのみ再計算されるメモ化された値を作成します。
+Creates a memoized value that recomputes only when dependencies change.
 
 ```moonbit
 let a = signal(2)
@@ -42,15 +58,15 @@ let sum = memo(fn() { a.get() + b.get() })
 sum()  // => 5
 
 a.set(10)
-sum()  // => 13（再計算される）
-sum()  // => 13（キャッシュされた値）
+sum()  // => 13 (recomputed)
+sum()  // => 13 (cached value)
 ```
 
-`computed` は `memo` のエイリアスです。
+`computed` is an alias for `memo`.
 
 ### render_effect
 
-Signal の変更時に同期的に再実行される副作用を作成します。
+Creates a side effect that re-runs synchronously when signals change.
 
 ```moonbit
 let count = signal(0)
@@ -59,29 +75,29 @@ let dispose = render_effect(fn() {
   println("count = " + count.get().to_string())
 })
 
-count.set(1)  // "count = 1" が出力される
-count.set(2)  // "count = 2" が出力される
+count.set(1)  // prints "count = 1"
+count.set(2)  // prints "count = 2"
 
-dispose()  // エフェクトを停止
+dispose()  // stop the effect
 ```
 
 ### effect
 
-`render_effect` と同様ですが、初回実行が microtask キューを通じて遅延されます（Solid.js の `createEffect` スタイル）。
+Similar to `render_effect`, but the initial execution is deferred via microtask queue (Solid.js `createEffect` style).
 
 ```moonbit
 let count = signal(0)
 let dispose = effect(fn() {
   println("deferred: " + count.get().to_string())
 })
-// 初回実行は現在の同期処理完了後
+// Initial execution happens after current synchronous code completes
 ```
 
-**注意**: `effect` は `queue_microtask` を使用しますが、これは環境固有の非同期処理です。詳細は後述の「環境固有の非同期処理について」を参照してください。
+**Note**: `effect` uses `queue_microtask`, which is environment-specific. See "Environment-specific async behavior" below.
 
 ### batch
 
-複数の更新をバッチ処理し、エフェクトは一度だけ実行されます。
+Batches multiple updates so effects run only once.
 
 ```moonbit
 let a = signal(0)
@@ -95,12 +111,12 @@ batch(fn() {
   a.set(1)
   b.set(2)
 })
-// エフェクトは1回だけ実行される
+// Effect runs only once
 ```
 
 ### on_cleanup
 
-エフェクト内でクリーンアップ関数を登録します。エフェクトの再実行前または破棄時に呼ばれます。
+Registers a cleanup function inside an effect. Called before the effect re-runs or when disposed.
 
 ```moonbit
 let _ = render_effect(fn() {
@@ -113,40 +129,40 @@ let _ = render_effect(fn() {
 
 ### create_root
 
-リアクティブスコープのルートを作成します。dispose を呼ぶと配下のすべてのエフェクトが停止します。
+Creates a reactive scope root. Calling dispose stops all effects within.
 
 ```moonbit
 create_root(fn(dispose) {
   let _ = render_effect(fn() { ... })
   let _ = render_effect(fn() { ... })
 
-  // すべてのエフェクトを一括停止
+  // Stop all effects at once
   dispose()
 })
 ```
 
 ### untracked
 
-追跡を無効にして関数を実行します。Signal の読み取りが依存関係を作りません。
+Runs a function with tracking disabled. Signal reads won't create dependencies.
 
 ```moonbit
 let _ = render_effect(fn() {
-  // このシグナル読み取りは依存関係にならない
+  // This signal read won't create a dependency
   untracked(fn() {
     let _ = some_signal.get()
   })
 })
 ```
 
-## 環境固有の非同期処理について
+## Environment-specific async behavior
 
-このライブラリは `queue_microtask` を使用して遅延エフェクト（`effect` 関数）を実装していますが、microtask のスケジューリングは環境固有の機能です。
+This library uses `queue_microtask` for deferred effects (the `effect` function), but microtask scheduling is environment-specific.
 
-- **JS ターゲット**: ブラウザ/Node.js のネイティブ `queueMicrotask` を使用
-- **非 JS ターゲット（wasm/native）**: フォールバックとして即時実行
+- **JS target**: Uses native `queueMicrotask` from browser/Node.js
+- **Non-JS targets (wasm/native)**: Falls back to immediate execution
 
-プロダクション環境で遅延実行が必要な場合は、ターゲット環境に応じた非同期処理の実装を検討してください。同期的な動作で十分な場合は `render_effect` の使用を推奨します。
+For production use requiring deferred execution, consider implementing environment-appropriate async handling. If synchronous behavior is sufficient, use `render_effect` instead.
 
-## ライセンス
+## License
 
 MIT

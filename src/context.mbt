@@ -35,9 +35,8 @@ pub fn Owner::new(parent : Owner?) -> Owner {
     disposed: false,
   }
   // Register with parent
-  match parent {
-    Some(p) => p.children.push(owner)
-    None => ()
+  if parent is Some(p) {
+    p.children.push(owner)
   }
   owner
 }
@@ -66,9 +65,8 @@ pub fn Owner::dispose(self : Owner) -> Unit {
   self.disposers.clear()
   self.cleanups.clear()
   // Remove from parent's children
-  match self.parent {
-    Some(p) => p.children.retain(fn(child) { child.id != self.id })
-    None => ()
+  if self.parent is Some(p) {
+    p.children.retain(fn(child) { child.id != self.id })
   }
 }
 
@@ -137,15 +135,13 @@ pub fn is_batching() -> Bool {
 /// (Solid.js style - can be called directly in component body)
 pub fn on_cleanup(cleanup : () -> Unit) -> Unit {
   // First priority: effect-level cleanup tracking
-  match reactive_context.current_cleanups {
-    Some(cleanups) => cleanups.push(cleanup)
-    None =>
-      // Second priority: owner-level cleanup (for component body)
-      match reactive_context.current_owner {
-        Some(owner) => owner.cleanups.push(cleanup)
-        None => () // No tracking scope, ignore
-      }
+  if reactive_context.current_cleanups is Some(cleanups) {
+    cleanups.push(cleanup)
+  } else if reactive_context.current_owner is Some(owner) {
+    // Second priority: owner-level cleanup (for component body)
+    owner.cleanups.push(cleanup)
   }
+  // No tracking scope, ignore
 }
 
 ///|
@@ -213,18 +209,16 @@ pub fn[T] create_root_with_dispose(f : () -> T) -> (T, () -> Unit) {
 /// Register a disposer with the current owner
 /// Called internally by effect() to register its dispose function
 pub fn register_disposer(disposer : () -> Unit) -> Unit {
-  match reactive_context.current_owner {
-    Some(owner) => owner.disposers.push(disposer)
-    None => () // No owner, disposer won't be tracked
+  if reactive_context.current_owner is Some(owner) {
+    owner.disposers.push(disposer)
   }
 }
 
 ///|
 /// Register a cleanup with the current owner (alternative to onCleanup in effect)
 pub fn register_owner_cleanup(cleanup : () -> Unit) -> Unit {
-  match reactive_context.current_owner {
-    Some(owner) => owner.cleanups.push(cleanup)
-    None => () // No owner, cleanup won't be tracked
+  if reactive_context.current_owner is Some(owner) {
+    owner.cleanups.push(cleanup)
   }
 }
 
