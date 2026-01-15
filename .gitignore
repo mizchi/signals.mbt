@@ -1,0 +1,17 @@
+# MoonBit build artifacts
+_build/
+target/
+target
+
+# MoonBit package cache
+.mooncakes/
+
+# Editor
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

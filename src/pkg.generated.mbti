@@ -1,0 +1,183 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "mizchi/signals"
+
+// Values
+pub fn[T] batch(() -> T) -> T
+
+pub fn batch_end() -> Unit
+
+pub fn batch_start() -> Unit
+
+pub fn check_dirty(Link, ReactiveNode, (ReactiveNode) -> Bool) -> Bool
+
+pub fn[T] computed(() -> T) -> () -> T
+
+pub fn[T] core_signal(T) -> CoreSignal[T]
+
+pub fn[T] create_root((() -> Unit) -> T) -> T
+
+pub fn[T] create_root_with_dispose(() -> T) -> (T, () -> Unit)
+
+pub fn effect(() -> Unit) -> () -> Unit
+
+pub fn effect_once(() -> Unit) -> Unit
+
+pub fn effect_when(() -> Bool, () -> Unit) -> () -> Unit
+
+pub fn end_batch() -> Unit
+
+pub fn flush() -> Unit
+
+pub fn get_active_sub() -> ReactiveNode?
+
+pub fn get_batch_depth() -> Int
+
+pub fn get_cycle() -> Int
+
+pub fn get_owner() -> Owner?
+
+pub fn has_owner() -> Bool
+
+pub fn inc_cycle() -> Unit
+
+pub fn is_batching() -> Bool
+
+pub fn link(ReactiveNode, ReactiveNode, Int) -> Unit
+
+pub fn[T] memo(() -> T) -> () -> T
+
+pub fn new_effect_id() -> Int
+
+pub fn on_cleanup(() -> Unit) -> Unit
+
+pub fn on_mount(() -> Unit) -> Unit
+
+pub fn propagate(Link) -> Unit
+
+pub fn purge_deps(ReactiveNode) -> Unit
+
+pub fn queue_effect(EffectNode) -> Unit
+
+pub fn register_disposer(() -> Unit) -> Unit
+
+pub fn register_owner_cleanup(() -> Unit) -> Unit
+
+pub fn render_effect(() -> Unit) -> () -> Unit
+
+pub fn[T] run_with_cleanup_tracking(Array[() -> Unit], () -> T) -> T
+
+pub fn[T] run_with_owner(Owner, () -> T) -> T
+
+pub fn set_active_sub(ReactiveNode?) -> ReactiveNode?
+
+pub fn set_current_cleanups(Array[() -> Unit]?) -> Array[() -> Unit]?
+
+pub fn shallow_propagate(Link) -> Unit
+
+pub fn[T] signal(T) -> Signal[T]
+
+pub fn start_batch() -> Unit
+
+pub fn unlink(Link, ReactiveNode) -> Link?
+
+pub fn[T] untracked(() -> T) -> T
+
+pub fn[T] with_parent_owner(Owner?, () -> T) -> T
+
+// Errors
+
+// Types and methods
+pub(all) struct Computed[T] {
+  node : ReactiveNode
+  mut value : T?
+  getter : () -> T
+}
+pub fn[T] Computed::get(Self[T]) -> T
+pub fn[T] Computed::peek(Self[T]) -> T?
+
+pub(all) struct CoreSignal[T] {
+  node : ReactiveNode
+  mut current_value : T
+  mut pending_value : T
+}
+pub fn[T] CoreSignal::clear_subscribers(Self[T]) -> Unit
+pub fn[T] CoreSignal::get(Self[T]) -> T
+pub fn[T] CoreSignal::peek(Self[T]) -> T
+pub fn[T] CoreSignal::set(Self[T], T) -> Unit
+pub fn[T] CoreSignal::subscriber_count(Self[T]) -> Int
+pub fn[T] CoreSignal::update(Self[T], (T) -> T) -> Unit
+
+pub(all) struct EffectNode {
+  node : ReactiveNode
+  run_fn : () -> Unit
+}
+
+pub(all) struct Flags {
+  mut value : Int
+}
+pub fn Flags::get_value(Self) -> Int
+pub fn Flags::has(Self, ReactiveFlags) -> Bool
+pub fn Flags::has_any(Self, Array[ReactiveFlags]) -> Bool
+pub fn Flags::new(Int) -> Self
+pub fn Flags::set(Self, ReactiveFlags) -> Unit
+pub fn Flags::set_value(Self, Int) -> Unit
+pub fn Flags::unset(Self, ReactiveFlags) -> Unit
+
+pub(all) struct Link {
+  mut version : Int
+  dep : ReactiveNode
+  sub : ReactiveNode
+  mut prev_sub : Link?
+  mut next_sub : Link?
+  mut prev_dep : Link?
+  mut next_dep : Link?
+}
+
+pub struct Owner {
+  id : Int
+  parent : Owner?
+  children : Array[Owner]
+  cleanups : Array[() -> Unit]
+  disposers : Array[() -> Unit]
+  mut disposed : Bool
+}
+pub fn Owner::dispose(Self) -> Unit
+pub fn Owner::new(Self?) -> Self
+
+pub(all) enum ReactiveFlags {
+  None
+  Mutable
+  Watching
+  RecursedCheck
+  Recursed
+  Dirty
+  Pending
+}
+pub fn ReactiveFlags::to_int(Self) -> Int
+
+pub(all) struct ReactiveNode {
+  mut deps : Link?
+  mut deps_tail : Link?
+  mut subs : Link?
+  mut subs_tail : Link?
+  flags : Flags
+  mut last_modified_cycle : Int
+  mut effect_callback : (() -> Unit)?
+}
+pub fn ReactiveNode::new(Int) -> Self
+
+pub struct Signal[T] {
+  inner : CoreSignal[T]
+}
+pub fn[T] Signal::clear_subscribers(Self[T]) -> Unit
+pub fn[T] Signal::get(Self[T]) -> T
+pub fn[T] Signal::new(T) -> Self[T]
+pub fn[T] Signal::peek(Self[T]) -> T
+pub fn[T] Signal::set(Self[T], T) -> Unit
+pub fn[T] Signal::subscriber_count(Self[T]) -> Int
+pub fn[T] Signal::update(Self[T], (T) -> T) -> Unit
+
+// Type aliases
+
+// Traits
+
