@@ -1,6 +1,7 @@
+import {
+  "moonbitlang/core/bench"
+}
+
 options(
-  targets: {
-    "effect_js.mbt": ["js"],
-    "effect_non_js.mbt": ["not", "js"],
-  },
+  targets: { "effect_js.mbt": [ "js" ], "effect_non_js.mbt": [ "not", "js" ] },
 )

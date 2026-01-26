@@ -1,0 +1,9 @@
+import {
+  "mizchi/signals/ui" as @ui,
+  "moonbitlang/core/bench"
+}
+
+options(
+  "supported-targets": [ "js", "wasm-gc", "native" ],
+  targets: { "escape_js.mbt": [ "js" ], "escape_non_js.mbt": [ "not", "js" ] },
+)
