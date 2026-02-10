@@ -78,7 +78,7 @@ pub fn all(signals : Array[Signal[Bool]]) -> () -> Bool {
       if not(sig.get()) {
         break false
       }
-    } else {
+    } nobreak {
       true
     }
   })
@@ -92,7 +92,7 @@ pub fn any(signals : Array[Signal[Bool]]) -> () -> Bool {
       if sig.get() {
         break true
       }
-    } else {
+    } nobreak {
       false
     }
   })
