@@ -51,7 +51,7 @@ pub fn[T] Computed::get(self : Computed[T]) -> T {
   }
   match self.value {
     Some(v) => v
-    None => abort("Computed value not initialized")
+    None => panic()
   }
 }
 
