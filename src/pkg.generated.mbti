@@ -256,6 +256,5 @@ pub fn[A, B, C] SplitStore3::new(A, B, C) -> Self[A, B, C]
 
 // Traits
 pub trait Snapshot {
-  snapshot(Self) -> Self
+  fn snapshot(Self) -> Self
 }
-

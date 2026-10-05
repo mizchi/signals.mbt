@@ -16,7 +16,7 @@ pub struct Context[T] {
 
 ///|
 /// Global context ID counter
-let context_id_counter : Ref[Int] = Ref::new(0)
+let context_id_counter : Ref[Int] = Ref(0)
 
 ///|
 /// Create a new context with a default value
@@ -25,7 +25,7 @@ pub fn[T] create_context(default_value : T) -> Context[T] {
   let id = context_id_counter.val
   context_id_counter.val = id + 1
   let default_fn = fn() { default_value }
-  { id, default_value: default_fn, providers: [] }
+  { id, default_value: default_fn, providers: [], }
 }
 
 ///|
@@ -35,7 +35,7 @@ fn is_owner_valid(owner_id : Int, current : Owner?) -> Bool {
     None => false
     Some(o) =>
       if o.id == owner_id {
-        not(o.disposed)
+        !o.disposed
       } else {
         is_owner_valid(owner_id, o.parent)
       }

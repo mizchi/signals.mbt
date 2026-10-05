@@ -10,7 +10,7 @@ pub struct Signal[T] {
 ///|
 /// Create a new signal with initial value.
 pub fn[T] Signal::new(initial : T) -> Signal[T] {
-  { inner: core_signal(initial) }
+  { inner: core_signal(initial), }
 }
 
 ///|
@@ -65,7 +65,7 @@ pub fn[T] signal(initial : T) -> Signal[T] {
 /// Unlike `effect()`, this doesn't auto-track and only listens to this one signal.
 /// Callback is NOT called on initial subscription, only on subsequent changes.
 pub fn[T] on(sig : Signal[T], callback : (T) -> Unit) -> () -> Unit {
-  let first_run = Ref::new(true)
+  let first_run = Ref(true)
   render_effect(fn() {
     let value = sig.get()
     if first_run.val {

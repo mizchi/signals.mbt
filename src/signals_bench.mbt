@@ -25,7 +25,7 @@ test "bench: memo computation" (b : @bench.T) {
 ///|
 test "bench: render_effect" (b : @bench.T) {
   let sig = signal(0)
-  let counter = Ref::new(0)
+  let counter = Ref(0)
   let dispose = render_effect(fn() {
     let _ = sig.get()
     counter.val = counter.val + 1
@@ -39,7 +39,7 @@ test "bench: render_effect" (b : @bench.T) {
 test "bench: batch vs non-batch" (b : @bench.T) {
   let a = signal(0)
   let b_sig = signal(0)
-  let counter = Ref::new(0)
+  let counter = Ref(0)
   let dispose = render_effect(fn() {
     let _ = a.get() + b_sig.get()
     counter.val = counter.val + 1
@@ -79,7 +79,7 @@ test "bench: deep dependency chain" (b : @bench.T) {
 test "bench: many subscribers" (b : @bench.T) {
   let sig = signal(0)
   let disposers : Array[() -> Unit] = []
-  let counter = Ref::new(0)
+  let counter = Ref(0)
 
   // Create 100 effects subscribing to the same signal
   for i = 0; i < 100; i = i + 1 {

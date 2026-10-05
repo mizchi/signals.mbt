@@ -20,7 +20,7 @@ pub fn[T] CoreSignal::get(self : CoreSignal[T]) -> T {
 
   // If dirty, update current from pending
   if (flags & dirty_flag) != 0 {
-    if not(physical_equal(self.current_value, self.pending_value)) {
+    if !physical_equal(self.current_value, self.pending_value) {
       self.current_value = self.pending_value
       if self.node.subs is Some(subs) {
         shallow_propagate(subs)
@@ -51,7 +51,7 @@ pub fn[T] CoreSignal::get(self : CoreSignal[T]) -> T {
 /// Set a new value for the core signal
 /// Notifies all subscribers if value changed
 pub fn[T] CoreSignal::set(self : CoreSignal[T], value : T) -> Unit {
-  if not(physical_equal(self.pending_value, value)) {
+  if !physical_equal(self.pending_value, value) {
     self.pending_value = value
     // Track when this signal was modified for diamond dependency resolution
     inc_cycle()
