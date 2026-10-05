@@ -17,7 +17,7 @@ pub struct SplitStore2[A, B] {
 
 ///|
 pub fn[A, B] SplitStore2::new(v1 : A, v2 : B) -> SplitStore2[A, B] {
-  { field1: signal(v1), field2: signal(v2) }
+  { field1: signal(v1), field2: signal(v2), }
 }
 
 ///|
@@ -34,7 +34,7 @@ pub fn[A, B, C] SplitStore3::new(
   v2 : B,
   v3 : C,
 ) -> SplitStore3[A, B, C] {
-  { field1: signal(v1), field2: signal(v2), field3: signal(v3) }
+  { field1: signal(v1), field2: signal(v2), field3: signal(v3), }
 }
 
 // =============================================================================
@@ -51,7 +51,7 @@ pub struct Lens[S, A] {
 
 ///|
 pub fn[S, A] Lens::new(get : (S) -> A, set : (S, A) -> S) -> Lens[S, A] {
-  { get, set }
+  { get, set, }
 }
 
 ///|
@@ -63,7 +63,7 @@ pub struct LensStore[T] {
 
 ///|
 pub fn[T] LensStore::new(initial : T) -> LensStore[T] {
-  { source: signal(initial) }
+  { source: signal(initial), }
 }
 
 ///|
@@ -112,7 +112,7 @@ pub fn[T] LensStore::update(self : LensStore[T], f : (T) -> T) -> Unit {
 ///|
 /// Trait for signal records that can produce a snapshot
 pub trait Snapshot {
-  snapshot(Self) -> Self
+  fn snapshot(Self) -> Self
 }
 
 ///|

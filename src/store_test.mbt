@@ -7,21 +7,21 @@
 
 ///|
 test "SplitStore2 creates store with two fields" {
-  let store = SplitStore2::new(0, "hello")
+  let store = @signals.SplitStore2::new(0, "hello")
   assert_eq(store.field1.get(), 0)
   assert_eq(store.field2.get(), "hello")
 }
 
 ///|
 test "SplitStore2 fields are independent" {
-  let store = SplitStore2::new(0, "hello")
-  let field1_runs = Ref::new(0)
-  let field2_runs = Ref::new(0)
-  let _ = render_effect(fn() {
+  let store = @signals.SplitStore2::new(0, "hello")
+  let field1_runs = Ref(0)
+  let field2_runs = Ref(0)
+  let _ = @signals.render_effect(fn() {
     let _ = store.field1.get()
     field1_runs.val = field1_runs.val + 1
   })
-  let _ = render_effect(fn() {
+  let _ = @signals.render_effect(fn() {
     let _ = store.field2.get()
     field2_runs.val = field2_runs.val + 1
   })
@@ -43,7 +43,7 @@ test "SplitStore2 fields are independent" {
 
 ///|
 test "SplitStore3 creates store with three fields" {
-  let store = SplitStore3::new(1, "test", true)
+  let store = @signals.SplitStore3::new(1, "test", true)
   assert_eq(store.field1.get(), 1)
   assert_eq(store.field2.get(), "test")
   assert_eq(store.field3.get(), true)
@@ -61,7 +61,10 @@ priv struct TestRecord {
 
 ///|
 test "LensStore creates store with initial value" {
-  let store : LensStore[TestRecord] = LensStore::new({ count: 0, name: "John" })
+  let store : @signals.LensStore[TestRecord] = @signals.LensStore::new({
+    count: 0,
+    name: "John",
+  })
   let snapshot = store.snapshot()
   assert_eq(snapshot.count, 0)
   assert_eq(snapshot.name, "John")
@@ -69,13 +72,14 @@ test "LensStore creates store with initial value" {
 
 ///|
 test "LensStore::focus creates reactive field accessor" {
-  let store : LensStore[TestRecord] = LensStore::new({ count: 0, name: "John" })
-  let count_lens : Lens[TestRecord, Int] = Lens::new(fn(s) { s.count }, fn(
-    s,
-    v,
-  ) {
-    { count: v, name: s.name }
+  let store : @signals.LensStore[TestRecord] = @signals.LensStore::new({
+    count: 0,
+    name: "John",
   })
+  let count_lens : @signals.Lens[TestRecord, Int] = @signals.Lens::new(
+    fn(s) { s.count },
+    fn(s, v) { { count: v, name: s.name, } },
+  )
   let (count_sig, set_count) = store.focus(count_lens)
   assert_eq(count_sig.get(), 0)
   set_count(42)
@@ -85,23 +89,22 @@ test "LensStore::focus creates reactive field accessor" {
 
 ///|
 test "LensStore focused field only updates when value changes" {
-  let store : LensStore[TestRecord] = LensStore::new({ count: 0, name: "John" })
-  let count_lens : Lens[TestRecord, Int] = Lens::new(fn(s) { s.count }, fn(
-    s,
-    v,
-  ) {
-    { count: v, name: s.name }
+  let store : @signals.LensStore[TestRecord] = @signals.LensStore::new({
+    count: 0,
+    name: "John",
   })
-  let name_lens : Lens[TestRecord, String] = Lens::new(fn(s) { s.name }, fn(
-    s,
-    v,
-  ) {
-    { count: s.count, name: v }
-  })
+  let count_lens : @signals.Lens[TestRecord, Int] = @signals.Lens::new(
+    fn(s) { s.count },
+    fn(s, v) { { count: v, name: s.name, } },
+  )
+  let name_lens : @signals.Lens[TestRecord, String] = @signals.Lens::new(
+    fn(s) { s.name },
+    fn(s, v) { { count: s.count, name: v, } },
+  )
   let (count_sig, _) = store.focus(count_lens)
   let (_, set_name) = store.focus(name_lens)
-  let count_runs = Ref::new(0)
-  let _ = render_effect(fn() {
+  let count_runs = Ref(0)
+  let _ = @signals.render_effect(fn() {
     let _ = count_sig.get()
     count_runs.val = count_runs.val + 1
   })
@@ -128,17 +131,17 @@ priv struct AppState {
 
 ///|
 priv struct ReactiveAppState {
-  count : Signal[Int]
-  name : Signal[String]
-  active : Signal[Bool]
+  count : @signals.Signal[Int]
+  name : @signals.Signal[String]
+  active : @signals.Signal[Bool]
 }
 
 ///|
 fn ReactiveAppState::new(initial : AppState) -> ReactiveAppState {
   {
-    count: signal(initial.count),
-    name: signal(initial.name),
-    active: signal(initial.active),
+    count: @signals.signal(initial.count),
+    name: @signals.signal(initial.name),
+    active: @signals.signal(initial.active),
   }
 }
 
@@ -153,14 +156,14 @@ fn ReactiveAppState::snapshot(self : ReactiveAppState) -> AppState {
 
 ///|
 test "ReactiveRecord pattern provides fine-grained updates" {
-  let state = ReactiveAppState::new({ count: 0, name: "User", active: true })
-  let count_runs = Ref::new(0)
-  let name_runs = Ref::new(0)
-  let _ = render_effect(fn() {
+  let state = ReactiveAppState::new({ count: 0, name: "User", active: true, })
+  let count_runs = Ref(0)
+  let name_runs = Ref(0)
+  let _ = @signals.render_effect(fn() {
     let _ = state.count.get()
     count_runs.val = count_runs.val + 1
   })
-  let _ = render_effect(fn() {
+  let _ = @signals.render_effect(fn() {
     let _ = state.name.get()
     name_runs.val = name_runs.val + 1
   })

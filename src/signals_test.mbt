@@ -9,7 +9,7 @@
 
 ///|
 test "signal basic" {
-  let count = signal(0)
+  let count = @signals.signal(0)
   inspect(count.get(), content="0")
   count.set(5)
   inspect(count.get(), content="5")
@@ -17,7 +17,7 @@ test "signal basic" {
 
 ///|
 test "signal update" {
-  let count = signal(10)
+  let count = @signals.signal(10)
   count.update(fn(n) { n * 2 })
   inspect(count.get(), content="20")
   count.update(fn(n) { n + 5 })
@@ -26,9 +26,9 @@ test "signal update" {
 
 ///|
 test "signal peek" {
-  let count = signal(0)
-  let runs : Ref[Int] = Ref::new(0)
-  let _ = render_effect(fn() {
+  let count = @signals.signal(0)
+  let runs : Ref[Int] = Ref(0)
+  let _ = @signals.render_effect(fn() {
     // peek() won't create dependency
     let _ = count.peek()
     runs.val = runs.val + 1
@@ -41,37 +41,37 @@ test "signal peek" {
 
 ///|
 test "Signal::new creates signal with initial value" {
-  let sig = Signal::new(42)
+  let sig = @signals.Signal::new(42)
   assert_eq(sig.peek(), 42)
 }
 
 ///|
 test "Signal::get returns current value" {
-  let sig = Signal::new("hello")
+  let sig = @signals.Signal::new("hello")
   assert_eq(sig.get(), "hello")
 }
 
 ///|
 test "Signal::set updates value" {
-  let sig = Signal::new(0)
+  let sig = @signals.Signal::new(0)
   sig.set(10)
   assert_eq(sig.get(), 10)
 }
 
 ///|
 test "Signal::update transforms value" {
-  let sig = Signal::new(5)
+  let sig = @signals.Signal::new(5)
   sig.update(fn(n) { n * 2 })
   assert_eq(sig.get(), 10)
 }
 
 ///|
 test "Signal::peek does not track dependency" {
-  let sig = Signal::new(1)
-  let count = Ref::new(0)
+  let sig = @signals.Signal::new(1)
+  let count = Ref(0)
 
   // Create effect that uses peek (should not track)
-  let _ = render_effect(fn() {
+  let _ = @signals.render_effect(fn() {
     let _ = sig.peek()
     count.val = count.val + 1
   })
@@ -88,7 +88,7 @@ test "Signal::peek does not track dependency" {
 
 ///|
 test "signal with complex type" {
-  let sig : Signal[Array[Int]] = Signal::new([1, 2, 3])
+  let sig : @signals.Signal[Array[Int]] = @signals.Signal::new([1, 2, 3])
   assert_eq(sig.get().length(), 3)
   sig.set([1, 2, 3, 4, 5])
   assert_eq(sig.get().length(), 5)
@@ -100,19 +100,19 @@ test "signal with complex type" {
 
 ///|
 test "render_effect basic" {
-  let count = signal(0)
+  let count = @signals.signal(0)
   let log : Array[Int] = []
-  let _ = render_effect(fn() { log.push(count.get()) })
+  let _ = @signals.render_effect(fn() { log.push(count.get()) })
   count.set(1)
   count.set(2)
-  inspect(log, content="[0, 1, 2]")
+  @debug.debug_inspect(log, content="[0, 1, 2]")
 }
 
 ///|
 test "render_effect dispose" {
-  let count = signal(0)
+  let count = @signals.signal(0)
   let log : Array[String] = []
-  let dispose = render_effect(fn() {
+  let dispose = @signals.render_effect(fn() {
     log.push("count=" + count.get().to_string())
   })
   log.push("after-effect")
@@ -121,21 +121,21 @@ test "render_effect dispose" {
   count.set(2) // Won't trigger effect
   let expected =
     #|["count=0", "after-effect", "count=1"]
-  inspect(log, content=expected)
+  @debug.debug_inspect(log, content=expected)
 }
 
 ///|
 test "effect runs immediately" {
-  let count = Ref::new(0)
-  let _ = render_effect(fn() { count.val = count.val + 1 })
+  let count = Ref(0)
+  let _ = @signals.render_effect(fn() { count.val = count.val + 1 })
   assert_eq(count.val, 1)
 }
 
 ///|
 test "effect re-runs when signal changes" {
-  let sig = Signal::new(0)
-  let observed = Ref::new(0)
-  let _ = render_effect(fn() { observed.val = sig.get() })
+  let sig = @signals.Signal::new(0)
+  let observed = Ref(0)
+  let _ = @signals.render_effect(fn() { observed.val = sig.get() })
   assert_eq(observed.val, 0)
   sig.set(42)
   assert_eq(observed.val, 42)
@@ -143,9 +143,9 @@ test "effect re-runs when signal changes" {
 
 ///|
 test "effect dispose stops re-running" {
-  let sig = Signal::new(0)
-  let count = Ref::new(0)
-  let dispose = render_effect(fn() {
+  let sig = @signals.Signal::new(0)
+  let count = Ref(0)
+  let dispose = @signals.render_effect(fn() {
     let _ = sig.get()
     count.val = count.val + 1
   })
@@ -162,10 +162,10 @@ test "effect dispose stops re-running" {
 
 ///|
 test "effect tracks multiple signals" {
-  let a = Signal::new(1)
-  let b = Signal::new(2)
-  let sum = Ref::new(0)
-  let _ = render_effect(fn() { sum.val = a.get() + b.get() })
+  let a = @signals.Signal::new(1)
+  let b = @signals.Signal::new(2)
+  let sum = Ref(0)
+  let _ = @signals.render_effect(fn() { sum.val = a.get() + b.get() })
   assert_eq(sum.val, 3)
   a.set(10)
   assert_eq(sum.val, 12)
@@ -175,10 +175,10 @@ test "effect tracks multiple signals" {
 
 ///|
 test "nested signals work correctly" {
-  let outer = Signal::new(1)
-  let inner = Signal::new(10)
-  let result = Ref::new(0)
-  let _ = render_effect(fn() { result.val = outer.get() * inner.get() })
+  let outer = @signals.Signal::new(1)
+  let inner = @signals.Signal::new(10)
+  let result = Ref(0)
+  let _ = @signals.render_effect(fn() { result.val = outer.get() * inner.get() })
   assert_eq(result.val, 10)
   outer.set(2)
   assert_eq(result.val, 20)
@@ -188,9 +188,9 @@ test "nested signals work correctly" {
 
 ///|
 test "effect_when only runs when condition is true" {
-  let condition = Signal::new(false)
-  let count = Ref::new(0)
-  let _ = effect_when(fn() { condition.get() }, fn() {
+  let condition = @signals.Signal::new(false)
+  let count = Ref(0)
+  let _ = @signals.effect_when(fn() { condition.get() }, fn() {
     count.val = count.val + 1
   })
 
@@ -204,20 +204,22 @@ test "effect_when only runs when condition is true" {
 
 ///|
 test "effect_when conditional" {
-  let enabled = signal(false)
-  let count = signal(0)
+  let enabled = @signals.signal(false)
+  let count = @signals.signal(0)
   let log : Array[Int] = []
-  let _ = effect_when(fn() { enabled.get() }, fn() { log.push(count.get()) })
+  let _ = @signals.effect_when(fn() { enabled.get() }, fn() {
+    log.push(count.get())
+  })
   count.set(1) // Won't run, enabled is false
   enabled.set(true)
   count.set(2)
-  inspect(log, content="[1, 2]")
+  @debug.debug_inspect(log, content="[1, 2]")
 }
 
 ///|
 test "effect_once runs only once and disposes" {
-  let count = Ref::new(0)
-  effect_once(fn() { count.val = count.val + 1 })
+  let count = Ref(0)
+  @signals.effect_once(fn() { count.val = count.val + 1 })
 
   // Effect ran once
   assert_eq(count.val, 1)
@@ -225,9 +227,9 @@ test "effect_once runs only once and disposes" {
 
 ///|
 test "effect_once runs only once" {
-  let count = Ref::new(0)
-  let sig = Signal::new(0)
-  effect_once(fn() {
+  let count = Ref(0)
+  let sig = @signals.Signal::new(0)
+  @signals.effect_once(fn() {
     let _ = sig.get()
     count.val = count.val + 1
   })
@@ -246,10 +248,10 @@ test "effect_once runs only once" {
 
 ///|
 test "memo basic" {
-  let a = signal(2)
-  let b = signal(3)
-  let compute_count : Ref[Int] = Ref::new(0)
-  let sum = memo(fn() {
+  let a = @signals.signal(2)
+  let b = @signals.signal(3)
+  let compute_count : Ref[Int] = Ref(0)
+  let sum = @signals.memo(fn() {
     compute_count.val = compute_count.val + 1
     a.get() + b.get()
   })
@@ -263,8 +265,8 @@ test "memo basic" {
 
 ///|
 test "computed alias" {
-  let count = signal(5)
-  let doubled = computed(fn() { count.get() * 2 })
+  let count = @signals.signal(5)
+  let doubled = @signals.computed(fn() { count.get() * 2 })
   inspect(doubled(), content="10")
   count.set(7)
   inspect(doubled(), content="14")
@@ -272,9 +274,9 @@ test "computed alias" {
 
 ///|
 test "memo caches computed value" {
-  let sig = Signal::new(5)
-  let compute_count = Ref::new(0)
-  let doubled = memo(fn() {
+  let sig = @signals.Signal::new(5)
+  let compute_count = Ref(0)
+  let doubled = @signals.memo(fn() {
     compute_count.val = compute_count.val + 1
     sig.get() * 2
   })
@@ -290,8 +292,8 @@ test "memo caches computed value" {
 
 ///|
 test "memo updates when dependency changes" {
-  let sig = Signal::new(3)
-  let squared = memo(fn() { sig.get() * sig.get() })
+  let sig = @signals.Signal::new(3)
+  let squared = @signals.memo(fn() { sig.get() * sig.get() })
   assert_eq(squared(), 9)
   sig.set(4)
   assert_eq(squared(), 16)
@@ -299,8 +301,8 @@ test "memo updates when dependency changes" {
 
 ///|
 test "computed is alias for memo" {
-  let sig = Signal::new(5)
-  let doubled = computed(fn() { sig.get() * 2 })
+  let sig = @signals.Signal::new(5)
+  let doubled = @signals.computed(fn() { sig.get() * 2 })
   assert_eq(doubled(), 10)
   sig.set(7)
   assert_eq(doubled(), 14)
@@ -312,15 +314,15 @@ test "computed is alias for memo" {
 
 ///|
 test "batch updates" {
-  let a = signal(0)
-  let b = signal(0)
-  let runs : Ref[Int] = Ref::new(0)
-  let _ = render_effect(fn() {
+  let a = @signals.signal(0)
+  let b = @signals.signal(0)
+  let runs : Ref[Int] = Ref(0)
+  let _ = @signals.render_effect(fn() {
     let _ = a.get() + b.get()
     runs.val = runs.val + 1
   })
   inspect(runs.val, content="1") // Initial run
-  batch(fn() {
+  @signals.batch(fn() {
     a.set(1)
     b.set(2)
   })
@@ -330,13 +332,13 @@ test "batch updates" {
 
 ///|
 test "batch delays effect execution" {
-  let sig = Signal::new(0)
+  let sig = @signals.Signal::new(0)
   let history : Array[Int] = []
-  let _ = render_effect(fn() { history.push(sig.get()) })
+  let _ = @signals.render_effect(fn() { history.push(sig.get()) })
 
   // Initial effect run
   assert_eq(history.length(), 1)
-  batch(fn() {
+  @signals.batch(fn() {
     sig.set(1)
     sig.set(2)
     sig.set(3)
@@ -349,13 +351,10 @@ test "batch delays effect execution" {
 
 ///|
 test "untracked prevents dependency tracking" {
-  let sig = Signal::new(0)
-  let count = Ref::new(0)
-  let _ = render_effect(fn() {
-    untracked(fn() {
-      let _ = sig.get()
-
-    })
+  let sig = @signals.Signal::new(0)
+  let count = Ref(0)
+  let _ = @signals.render_effect(fn() {
+    @signals.untracked(fn() { let _ = sig.get() })
     count.val = count.val + 1
   })
 
@@ -369,10 +368,10 @@ test "untracked prevents dependency tracking" {
 
 ///|
 test "untracked reads" {
-  let count = signal(0)
-  let runs : Ref[Int] = Ref::new(0)
-  let _ = render_effect(fn() {
-    untracked(fn() {
+  let count = @signals.signal(0)
+  let runs : Ref[Int] = Ref(0)
+  let _ = @signals.render_effect(fn() {
+    @signals.untracked(fn() {
       let _ = count.get() // Won't create dependency
       runs.val = runs.val + 1
     })
@@ -385,11 +384,11 @@ test "untracked reads" {
 
 ///|
 test "is_batching returns correct state" {
-  assert_false(is_batching())
-  batch_start()
-  assert_true(is_batching())
-  batch_end()
-  assert_false(is_batching())
+  assert_false(@signals.is_batching())
+  @signals.batch_start()
+  assert_true(@signals.is_batching())
+  @signals.batch_end()
+  assert_false(@signals.is_batching())
 }
 
 // =============================================================================
@@ -398,9 +397,9 @@ test "is_batching returns correct state" {
 
 ///|
 test "on subscribes to signal changes" {
-  let sig = Signal::new(0)
+  let sig = @signals.Signal::new(0)
   let observed : Array[Int] = []
-  let unsub = on(sig, fn(value) { observed.push(value) })
+  let unsub = @signals.on(sig, fn(value) { observed.push(value) })
   sig.set(1)
   assert_eq(observed.length(), 1)
   assert_eq(observed[0], 1)
@@ -415,9 +414,9 @@ test "on subscribes to signal changes" {
 
 ///|
 test "on_immediate runs with initial value" {
-  let sig = Signal::new(42)
+  let sig = @signals.Signal::new(42)
   let observed : Array[Int] = []
-  let _ = on_immediate(sig, fn(value) { observed.push(value) })
+  let _ = @signals.on_immediate(sig, fn(value) { observed.push(value) })
 
   // Should have initial value
   assert_eq(observed.length(), 1)
@@ -430,27 +429,27 @@ test "on_immediate runs with initial value" {
 
 ///|
 test "on_cleanup in effect" {
-  let count = signal(0)
+  let count = @signals.signal(0)
   let log : Array[String] = []
-  let dispose = render_effect(fn() {
+  let dispose = @signals.render_effect(fn() {
     let v = count.get()
     log.push("run:" + v.to_string())
-    on_cleanup(fn() { log.push("cleanup:" + v.to_string()) })
+    @signals.on_cleanup(fn() { log.push("cleanup:" + v.to_string()) })
   })
   count.set(1)
   dispose()
   let expected =
     #|["run:0", "cleanup:0", "run:1", "cleanup:1"]
-  inspect(log, content=expected)
+  @debug.debug_inspect(log, content=expected)
 }
 
 ///|
 test "on_cleanup runs before effect re-runs" {
-  let sig = Signal::new(0)
-  let cleanup_count = Ref::new(0)
-  let _ = render_effect(fn() {
+  let sig = @signals.Signal::new(0)
+  let cleanup_count = Ref(0)
+  let _ = @signals.render_effect(fn() {
     let _ = sig.get()
-    on_cleanup(fn() { cleanup_count.val = cleanup_count.val + 1 })
+    @signals.on_cleanup(fn() { cleanup_count.val = cleanup_count.val + 1 })
   })
 
   // No cleanup yet
@@ -466,9 +465,9 @@ test "on_cleanup runs before effect re-runs" {
 
 ///|
 test "on_cleanup runs on dispose" {
-  let cleanup_count = Ref::new(0)
-  let dispose = render_effect(fn() {
-    on_cleanup(fn() { cleanup_count.val = cleanup_count.val + 1 })
+  let cleanup_count = Ref(0)
+  let dispose = @signals.render_effect(fn() {
+    @signals.on_cleanup(fn() { cleanup_count.val = cleanup_count.val + 1 })
   })
   assert_eq(cleanup_count.val, 0)
   dispose()
@@ -478,7 +477,7 @@ test "on_cleanup runs on dispose" {
 ///|
 test "on_cleanup outside effect is ignored" {
   // This should not crash - just be ignored
-  on_cleanup(fn() { () })
+  @signals.on_cleanup(fn() { () })
 }
 
 // =============================================================================
@@ -487,9 +486,9 @@ test "on_cleanup outside effect is ignored" {
 
 ///|
 test "watch calls callback on change" {
-  let sig = Signal::new(0)
+  let sig = @signals.Signal::new(0)
   let changes : Array[(Int, Int)] = []
-  let _ = watch(fn() { sig.get() }, fn(new_val, old_val) {
+  let _ = @signals.watch(fn() { sig.get() }, fn(new_val, old_val) {
     changes.push((new_val, old_val))
   })
 
@@ -507,9 +506,9 @@ test "watch calls callback on change" {
 
 ///|
 test "watch does not call for same value" {
-  let sig = Signal::new(5)
-  let call_count = Ref::new(0)
-  let _ = watch(fn() { sig.get() }, fn(_new, _old) {
+  let sig = @signals.Signal::new(5)
+  let call_count = Ref(0)
+  let _ = @signals.watch(fn() { sig.get() }, fn(_new, _old) {
     call_count.val = call_count.val + 1
   })
   sig.set(5) // Same value
@@ -520,9 +519,9 @@ test "watch does not call for same value" {
 
 ///|
 test "watch_immediate calls callback with initial value" {
-  let sig = Signal::new(42)
+  let sig = @signals.Signal::new(42)
   let values : Array[(Int, Int?)] = []
-  let _ = watch_immediate(fn() { sig.get() }, fn(new_val, old_val) {
+  let _ = @signals.watch_immediate(fn() { sig.get() }, fn(new_val, old_val) {
     values.push((new_val, old_val))
   })
 
@@ -540,9 +539,9 @@ test "watch_immediate calls callback with initial value" {
 
 ///|
 test "watch_immediate does not call for same value" {
-  let sig = Signal::new(5)
-  let call_count = Ref::new(0)
-  let _ = watch_immediate(fn() { sig.get() }, fn(_new, _old) {
+  let sig = @signals.Signal::new(5)
+  let call_count = Ref(0)
+  let _ = @signals.watch_immediate(fn() { sig.get() }, fn(_new, _old) {
     call_count.val = call_count.val + 1
   })
 
@@ -564,8 +563,8 @@ test "watch_immediate does not call for same value" {
 
 ///|
 test "previous tracks previous value" {
-  let sig = Signal::new(1)
-  let prev = previous(sig)
+  let sig = @signals.Signal::new(1)
+  let prev = @signals.previous(sig)
 
   // Initially no previous
   assert_eq(prev(), None)
@@ -577,8 +576,8 @@ test "previous tracks previous value" {
 
 ///|
 test "previous_with_initial uses initial value" {
-  let sig = Signal::new(10)
-  let prev = previous_with_initial(sig, 0)
+  let sig = @signals.Signal::new(10)
+  let prev = @signals.previous_with_initial(sig, 0)
 
   // Initial previous is 0
   assert_eq(prev(), 0)
@@ -592,8 +591,8 @@ test "previous_with_initial uses initial value" {
 
 ///|
 test "sig_map transforms value" {
-  let sig = Signal::new(5)
-  let doubled = sig_map(sig, fn(n) { n * 2 })
+  let sig = @signals.Signal::new(5)
+  let doubled = @signals.sig_map(sig, fn(n) { n * 2 })
   assert_eq(doubled(), 10)
   sig.set(7)
   assert_eq(doubled(), 14)
@@ -601,8 +600,8 @@ test "sig_map transforms value" {
 
 ///|
 test "sig_filter filters values by predicate" {
-  let sig = Signal::new(0)
-  let filtered = sig_filter(sig, fn(n) { n > 5 })
+  let sig = @signals.Signal::new(0)
+  let filtered = @signals.sig_filter(sig, fn(n) { n > 5 })
 
   // Initially None since 0 <= 5
   assert_eq(filtered.peek(), None)
@@ -618,8 +617,8 @@ test "sig_filter filters values by predicate" {
 
 ///|
 test "sig_filter_map filters and maps values" {
-  let sig = Signal::new(0)
-  let filtered = sig_filter_map(sig, fn(n) {
+  let sig = @signals.Signal::new(0)
+  let filtered = @signals.sig_filter_map(sig, fn(n) {
     if n > 0 {
       Some(n * 2)
     } else {
@@ -637,9 +636,9 @@ test "sig_filter_map filters and maps values" {
 
 ///|
 test "combine2 combines two signals" {
-  let a = Signal::new(10)
-  let b = Signal::new(20)
-  let sum = combine2(a, b, fn(x, y) { x + y })
+  let a = @signals.Signal::new(10)
+  let b = @signals.Signal::new(20)
+  let sum = @signals.combine2(a, b, fn(x, y) { x + y })
   assert_eq(sum(), 30)
   a.set(5)
   assert_eq(sum(), 25)
@@ -649,10 +648,10 @@ test "combine2 combines two signals" {
 
 ///|
 test "combine3 combines three signals" {
-  let a = Signal::new(1)
-  let b = Signal::new(2)
-  let c = Signal::new(3)
-  let sum = combine3(a, b, c, fn(x, y, z) { x + y + z })
+  let a = @signals.Signal::new(1)
+  let b = @signals.Signal::new(2)
+  let c = @signals.Signal::new(3)
+  let sum = @signals.combine3(a, b, c, fn(x, y, z) { x + y + z })
   assert_eq(sum(), 6)
   a.set(10)
   assert_eq(sum(), 15)
@@ -664,11 +663,11 @@ test "combine3 combines three signals" {
 
 ///|
 test "combine4 combines four signals" {
-  let a = Signal::new(1)
-  let b = Signal::new(2)
-  let c = Signal::new(3)
-  let d = Signal::new(4)
-  let sum = combine4(a, b, c, d, fn(w, x, y, z) { w + x + y + z })
+  let a = @signals.Signal::new(1)
+  let b = @signals.Signal::new(2)
+  let c = @signals.Signal::new(3)
+  let d = @signals.Signal::new(4)
+  let sum = @signals.combine4(a, b, c, d, fn(w, x, y, z) { w + x + y + z })
   assert_eq(sum(), 10)
   a.set(10)
   assert_eq(sum(), 19)
@@ -678,10 +677,10 @@ test "combine4 combines four signals" {
 
 ///|
 test "all returns true when all signals are true" {
-  let a = Signal::new(true)
-  let b = Signal::new(true)
-  let c = Signal::new(true)
-  let all_true = all([a, b, c])
+  let a = @signals.Signal::new(true)
+  let b = @signals.Signal::new(true)
+  let c = @signals.Signal::new(true)
+  let all_true = @signals.all([a, b, c])
   assert_eq(all_true(), true)
   b.set(false)
   assert_eq(all_true(), false)
@@ -689,9 +688,9 @@ test "all returns true when all signals are true" {
 
 ///|
 test "any returns true when any signal is true" {
-  let a = Signal::new(false)
-  let b = Signal::new(false)
-  let any_true = any([a, b])
+  let a = @signals.Signal::new(false)
+  let b = @signals.Signal::new(false)
+  let any_true = @signals.any([a, b])
   assert_eq(any_true(), false)
   a.set(true)
   assert_eq(any_true(), true)
@@ -699,9 +698,9 @@ test "any returns true when any signal is true" {
 
 ///|
 test "select returns element at index" {
-  let items = Signal::new([10, 20, 30, 40])
-  let index = Signal::new(1)
-  let selected = select(items, index)
+  let items = @signals.Signal::new([10, 20, 30, 40])
+  let index = @signals.Signal::new(1)
+  let selected = @signals.select(items, index)
   assert_eq(selected(), Some(20))
   index.set(0)
   assert_eq(selected(), Some(10))
@@ -711,9 +710,9 @@ test "select returns element at index" {
 
 ///|
 test "select returns None for out of bounds" {
-  let items = Signal::new([10, 20, 30])
-  let index = Signal::new(5)
-  let selected = select(items, index)
+  let items = @signals.Signal::new([10, 20, 30])
+  let index = @signals.Signal::new(5)
+  let selected = @signals.select(items, index)
   assert_eq(selected(), None)
   index.set(-1)
   assert_eq(selected(), None)
@@ -721,8 +720,8 @@ test "select returns None for out of bounds" {
 
 ///|
 test "to_getter creates read-only getter" {
-  let sig = Signal::new(42)
-  let getter = to_getter(sig)
+  let sig = @signals.Signal::new(42)
+  let getter = @signals.to_getter(sig)
   assert_eq(getter(), 42)
   sig.set(100)
   assert_eq(getter(), 100)
@@ -730,23 +729,23 @@ test "to_getter creates read-only getter" {
 
 ///|
 test "flatten flattens nested signals" {
-  let inner = Signal::new(10)
-  let outer = Signal::new(inner)
-  let flattened = flatten(outer)
+  let inner = @signals.Signal::new(10)
+  let outer = @signals.Signal::new(inner)
+  let flattened = @signals.flatten(outer)
   assert_eq(flattened(), 10)
   inner.set(20)
   assert_eq(flattened(), 20)
-  let new_inner = Signal::new(30)
+  let new_inner = @signals.Signal::new(30)
   outer.set(new_inner)
   assert_eq(flattened(), 30)
 }
 
 ///|
 test "switch_ selects based on condition" {
-  let cond = Signal::new(true)
-  let on_true = Signal::new("yes")
-  let on_false = Signal::new("no")
-  let result = switch_(cond, on_true, on_false)
+  let cond = @signals.Signal::new(true)
+  let on_true = @signals.Signal::new("yes")
+  let on_false = @signals.Signal::new("no")
+  let result = @signals.switch_(cond, on_true, on_false)
   assert_eq(result(), "yes")
   cond.set(false)
   assert_eq(result(), "no")
@@ -758,39 +757,38 @@ test "switch_ selects based on condition" {
 
 ///|
 test "create_root dispose" {
-  let count = signal(0)
+  let count = @signals.signal(0)
   let log : Array[Int] = []
-  let result = create_root(fn(dispose) {
-    let _ = render_effect(fn() { log.push(count.get()) })
+  let result = @signals.create_root(fn(dispose) {
+    let _ = @signals.render_effect(fn() { log.push(count.get()) })
     dispose // Return dispose function
   })
   count.set(1)
   result() // Dispose the root
   count.set(2) // Won't trigger effect
-  inspect(log, content="[0, 1]")
+  @debug.debug_inspect(log, content="[0, 1]")
 }
 
 ///|
 test "create_root disposes all effects" {
-  let sig = Signal::new(0)
-  let effect_count = Ref::new(0)
-  let cleanup_count = Ref::new(0)
-  let dispose_ref : Ref[(() -> Unit)?] = Ref::new(None)
-  create_root(fn(dispose) {
+  let sig = @signals.Signal::new(0)
+  let effect_count = Ref(0)
+  let cleanup_count = Ref(0)
+  let dispose_ref : Ref[(() -> Unit)?] = Ref(None)
+  @signals.create_root(fn(dispose) {
     dispose_ref.val = Some(dispose)
 
     // Create multiple effects inside root
-    let _ = render_effect(fn() {
+    let _ = @signals.render_effect(fn() {
       let _ = sig.get()
       effect_count.val = effect_count.val + 1
-      on_cleanup(fn() { cleanup_count.val = cleanup_count.val + 1 })
+      @signals.on_cleanup(fn() { cleanup_count.val = cleanup_count.val + 1 })
     })
-    let _ = render_effect(fn() {
+    let _ = @signals.render_effect(fn() {
       let _ = sig.get()
       effect_count.val = effect_count.val + 1
-      on_cleanup(fn() { cleanup_count.val = cleanup_count.val + 1 })
+      @signals.on_cleanup(fn() { cleanup_count.val = cleanup_count.val + 1 })
     })
-
   })
 
   // Both effects ran once
@@ -818,19 +816,18 @@ test "create_root disposes all effects" {
 
 ///|
 test "nested create_root disposes correctly" {
-  let outer_cleanup = Ref::new(0)
-  let inner_cleanup = Ref::new(0)
-  let dispose_ref : Ref[(() -> Unit)?] = Ref::new(None)
-  create_root(fn(dispose_outer) {
+  let outer_cleanup = Ref(0)
+  let inner_cleanup = Ref(0)
+  let dispose_ref : Ref[(() -> Unit)?] = Ref(None)
+  @signals.create_root(fn(dispose_outer) {
     dispose_ref.val = Some(dispose_outer)
-    let _ = render_effect(fn() {
-      on_cleanup(fn() { outer_cleanup.val = outer_cleanup.val + 1 })
+    let _ = @signals.render_effect(fn() {
+      @signals.on_cleanup(fn() { outer_cleanup.val = outer_cleanup.val + 1 })
     })
-    create_root(fn(_dispose_inner) {
-      let _ = render_effect(fn() {
-        on_cleanup(fn() { inner_cleanup.val = inner_cleanup.val + 1 })
+    @signals.create_root(fn(_dispose_inner) {
+      let _ = @signals.render_effect(fn() {
+        @signals.on_cleanup(fn() { inner_cleanup.val = inner_cleanup.val + 1 })
       })
-
     })
   })
 
@@ -845,27 +842,29 @@ test "nested create_root disposes correctly" {
 
 ///|
 test "get_owner returns owner inside create_root" {
-  assert_true(get_owner() is None)
-  let has_owner_inside = Ref::new(false)
-  create_root(fn(_) { has_owner_inside.val = get_owner() is Some(_) })
+  assert_true(@signals.get_owner() is None)
+  let has_owner_inside = Ref(false)
+  @signals.create_root(fn(_) {
+    has_owner_inside.val = @signals.get_owner() is Some(_)
+  })
   assert_true(has_owner_inside.val)
-  assert_true(get_owner() is None)
+  assert_true(@signals.get_owner() is None)
 }
 
 ///|
 test "run_with_owner preserves owner context" {
-  let owner_ref : Ref[Owner?] = Ref::new(None)
-  create_root(fn(_) { owner_ref.val = get_owner() })
+  let owner_ref : Ref[@signals.Owner?] = Ref(None)
+  @signals.create_root(fn(_) { owner_ref.val = @signals.get_owner() })
 
   // Outside root, no owner
-  assert_true(get_owner() is None)
+  assert_true(@signals.get_owner() is None)
 
   // Run with saved owner
-  let has_owner_inside = Ref::new(false)
+  let has_owner_inside = Ref(false)
   match owner_ref.val {
     Some(owner) =>
-      run_with_owner(owner, fn() {
-        has_owner_inside.val = get_owner() is Some(_)
+      @signals.run_with_owner(owner, fn() {
+        has_owner_inside.val = @signals.get_owner() is Some(_)
       })
     None => ()
   }
@@ -874,10 +873,10 @@ test "run_with_owner preserves owner context" {
 
 ///|
 test "on_mount runs without tracking" {
-  let sig = Signal::new(0)
-  let mount_count = Ref::new(0)
-  create_root(fn(_) {
-    on_mount(fn() {
+  let sig = @signals.Signal::new(0)
+  let mount_count = Ref(0)
+  @signals.create_root(fn(_) {
+    @signals.on_mount(fn() {
       let _ = sig.get() // Should not create dependency
       mount_count.val = mount_count.val + 1
     })
@@ -892,23 +891,23 @@ test "on_mount runs without tracking" {
 ///|
 test "has_owner returns correct state" {
   // Outside create_root, no owner
-  assert_false(has_owner())
-  let inside_result = Ref::new(false)
-  create_root(fn(_) {
+  assert_false(@signals.has_owner())
+  let inside_result = Ref(false)
+  @signals.create_root(fn(_) {
     // Inside create_root, has owner
-    inside_result.val = has_owner()
+    inside_result.val = @signals.has_owner()
   })
   assert_true(inside_result.val)
 
   // Outside again
-  assert_false(has_owner())
+  assert_false(@signals.has_owner())
 }
 
 ///|
 test "create_root_with_dispose returns result and dispose function" {
-  let cleanup_ran = Ref::new(false)
-  let (result, dispose) = create_root_with_dispose(fn() {
-    register_owner_cleanup(fn() { cleanup_ran.val = true })
+  let cleanup_ran = Ref(false)
+  let (result, dispose) = @signals.create_root_with_dispose(fn() {
+    @signals.register_owner_cleanup(fn() { cleanup_ran.val = true })
     42
   })
   assert_eq(result, 42)
@@ -921,10 +920,14 @@ test "create_root_with_dispose returns result and dispose function" {
 
 ///|
 test "register_owner_cleanup runs on dispose" {
-  let cleanup_count = Ref::new(0)
-  create_root(fn(dispose) {
-    register_owner_cleanup(fn() { cleanup_count.val = cleanup_count.val + 1 })
-    register_owner_cleanup(fn() { cleanup_count.val = cleanup_count.val + 1 })
+  let cleanup_count = Ref(0)
+  @signals.create_root(fn(dispose) {
+    @signals.register_owner_cleanup(fn() {
+      cleanup_count.val = cleanup_count.val + 1
+    })
+    @signals.register_owner_cleanup(fn() {
+      cleanup_count.val = cleanup_count.val + 1
+    })
     dispose()
   })
   assert_eq(cleanup_count.val, 2)
@@ -933,19 +936,18 @@ test "register_owner_cleanup runs on dispose" {
 ///|
 test "register_owner_cleanup outside owner is no-op" {
   // Outside of create_root, this should be a no-op (not crash)
-  register_owner_cleanup(fn() { () })
+  @signals.register_owner_cleanup(fn() { () })
 }
 
 ///|
 test "Owner::dispose early return when already disposed" {
-  let cleanup_count = Ref::new(0)
-  let dispose_ref : Ref[(() -> Unit)?] = Ref::new(None)
-  create_root(fn(dispose) {
+  let cleanup_count = Ref(0)
+  let dispose_ref : Ref[(() -> Unit)?] = Ref(None)
+  @signals.create_root(fn(dispose) {
     dispose_ref.val = Some(dispose)
-    let _ = render_effect(fn() {
-      on_cleanup(fn() { cleanup_count.val = cleanup_count.val + 1 })
+    let _ = @signals.render_effect(fn() {
+      @signals.on_cleanup(fn() { cleanup_count.val = cleanup_count.val + 1 })
     })
-
   })
 
   // First dispose
@@ -968,9 +970,9 @@ test "Owner::dispose early return when already disposed" {
 
 ///|
 test "Signal::clear_subscribers clears all subscribers" {
-  let sig = Signal::new(0)
-  let count = Ref::new(0)
-  let _ = render_effect(fn() {
+  let sig = @signals.Signal::new(0)
+  let count = Ref(0)
+  let _ = @signals.render_effect(fn() {
     let _ = sig.get()
     count.val = count.val + 1
   })
@@ -987,29 +989,23 @@ test "Signal::clear_subscribers clears all subscribers" {
 
 ///|
 test "Signal::subscriber_count returns correct count" {
-  let sig = Signal::new(0)
+  let sig = @signals.Signal::new(0)
   assert_eq(sig.subscriber_count(), 0)
-  let _ = render_effect(fn() {
-    let _ = sig.get()
-
-  })
+  let _ = @signals.render_effect(fn() { let _ = sig.get() })
   assert_eq(sig.subscriber_count(), 1)
-  let _ = render_effect(fn() {
-    let _ = sig.get()
-
-  })
+  let _ = @signals.render_effect(fn() { let _ = sig.get() })
   assert_eq(sig.subscriber_count(), 2)
 }
 
 ///|
 test "Signal::remove_subscriber removes specific subscriber" {
-  let sig = Signal::new(0)
-  let count1 = Ref::new(0)
-  let count2 = Ref::new(0)
+  let sig = @signals.Signal::new(0)
+  let count1 = Ref(0)
+  let count2 = Ref(0)
 
   // Create two effects
-  let _ = on(sig, fn(_) { count1.val = count1.val + 1 })
-  let _ = on(sig, fn(_) { count2.val = count2.val + 1 })
+  let _ = @signals.on(sig, fn(_) { count1.val = count1.val + 1 })
+  let _ = @signals.on(sig, fn(_) { count2.val = count2.val + 1 })
   assert_eq(sig.subscriber_count(), 2)
 
   // Both effects respond
@@ -1020,12 +1016,12 @@ test "Signal::remove_subscriber removes specific subscriber" {
 
 ///|
 test "Signal::remove_subscriber iterates through multiple subscribers" {
-  let sig = Signal::new(0)
+  let sig = @signals.Signal::new(0)
 
   // Create three subscribers
-  let _ = on(sig, fn(_) {  })
-  let _ = on(sig, fn(_) {  })
-  let unsub3 = on(sig, fn(_) {  })
+  let _ = @signals.on(sig, fn(_) {  })
+  let _ = @signals.on(sig, fn(_) {  })
+  let unsub3 = @signals.on(sig, fn(_) {  })
   assert_eq(sig.subscriber_count(), 3)
 
   // Remove the third subscriber - this should iterate through first two
@@ -1039,30 +1035,32 @@ test "Signal::remove_subscriber iterates through multiple subscribers" {
 
 ///|
 test "create_context creates context with default value" {
-  let ctx = create_context(42)
-  assert_eq(use_context(ctx), 42)
+  let ctx = @signals.create_context(42)
+  assert_eq(@signals.use_context(ctx), 42)
 }
 
 ///|
 test "provide overrides context value within scope" {
-  let ctx = create_context("default")
-  assert_eq(use_context(ctx), "default")
-  let result = provide(ctx, "provided", fn() { use_context(ctx) })
+  let ctx = @signals.create_context("default")
+  assert_eq(@signals.use_context(ctx), "default")
+  let result = @signals.provide(ctx, "provided", fn() {
+    @signals.use_context(ctx)
+  })
   assert_eq(result, "provided")
 
   // Outside of provide, should return default again
-  assert_eq(use_context(ctx), "default")
+  assert_eq(@signals.use_context(ctx), "default")
 }
 
 ///|
 test "provide supports nested scopes" {
-  let ctx = create_context(0)
+  let ctx = @signals.create_context(0)
   let results : Array[Int] = []
-  provide(ctx, 1, fn() {
-    results.push(use_context(ctx))
-    provide(ctx, 2, fn() { results.push(use_context(ctx)) })
+  @signals.provide(ctx, 1, fn() {
+    results.push(@signals.use_context(ctx))
+    @signals.provide(ctx, 2, fn() { results.push(@signals.use_context(ctx)) })
     // After inner provide, should return to outer value
-    results.push(use_context(ctx))
+    results.push(@signals.use_context(ctx))
   })
   assert_eq(results[0], 1)
   assert_eq(results[1], 2)
@@ -1071,15 +1069,15 @@ test "provide supports nested scopes" {
 
 ///|
 test "multiple contexts are independent" {
-  let ctx_a = create_context("A")
-  let ctx_b = create_context("B")
+  let ctx_a = @signals.create_context("A")
+  let ctx_b = @signals.create_context("B")
   let results : Array[String] = []
-  provide(ctx_a, "A-override", fn() {
-    results.push(use_context(ctx_a))
-    results.push(use_context(ctx_b))
-    provide(ctx_b, "B-override", fn() {
-      results.push(use_context(ctx_a))
-      results.push(use_context(ctx_b))
+  @signals.provide(ctx_a, "A-override", fn() {
+    results.push(@signals.use_context(ctx_a))
+    results.push(@signals.use_context(ctx_b))
+    @signals.provide(ctx_b, "B-override", fn() {
+      results.push(@signals.use_context(ctx_a))
+      results.push(@signals.use_context(ctx_b))
     })
   })
   assert_eq(results[0], "A-override")
@@ -1124,24 +1122,24 @@ test "multiple contexts are independent" {
 /// When a1 changes, b1 and b2 should update before c1
 test "diamond: propagates in topological order" {
   let seq : Array[String] = []
-  let a1 = Signal::new(false)
+  let a1 = @signals.Signal::new(false)
 
   // b1 depends on a1
-  let b1 = memo(fn() {
+  let b1 = @signals.memo(fn() {
     let _ = a1.get()
     seq.push("b1")
     0
   })
 
   // b2 depends on a1
-  let b2 = memo(fn() {
+  let b2 = @signals.memo(fn() {
     let _ = a1.get()
     seq.push("b2")
     0
   })
 
   // c1 depends on both b1 and b2
-  let c1 = memo(fn() {
+  let c1 = @signals.memo(fn() {
     let _ = b1()
     let _ = b2()
     seq.push("c1")
@@ -1177,14 +1175,14 @@ test "diamond: propagates in topological order" {
 ///
 /// When d changes, g should only compute once despite having 5 dependencies
 test "diamond: only propagates once with linear convergence" {
-  let d = Signal::new(0)
-  let f1 = memo(fn() { d.get() })
-  let f2 = memo(fn() { d.get() })
-  let f3 = memo(fn() { d.get() })
-  let f4 = memo(fn() { d.get() })
-  let f5 = memo(fn() { d.get() })
-  let g_count = Ref::new(0)
-  let g = memo(fn() {
+  let d = @signals.Signal::new(0)
+  let f1 = @signals.memo(fn() { d.get() })
+  let f2 = @signals.memo(fn() { d.get() })
+  let f3 = @signals.memo(fn() { d.get() })
+  let f4 = @signals.memo(fn() { d.get() })
+  let f5 = @signals.memo(fn() { d.get() })
+  let g_count = Ref(0)
+  let g = @signals.memo(fn() {
     g_count.val = g_count.val + 1
     f1() + f2() + f3() + f4() + f5()
   })
@@ -1222,15 +1220,15 @@ test "diamond: only propagates once with linear convergence" {
 ///
 /// When d changes, h should only compute once despite exponential paths
 test "diamond: only propagates once with exponential convergence" {
-  let d = Signal::new(0)
-  let f1 = memo(fn() { d.get() })
-  let f2 = memo(fn() { d.get() })
-  let f3 = memo(fn() { d.get() })
-  let g1 = memo(fn() { f1() + f2() + f3() })
-  let g2 = memo(fn() { f1() + f2() + f3() })
-  let g3 = memo(fn() { f1() + f2() + f3() })
-  let h_count = Ref::new(0)
-  let h = memo(fn() {
+  let d = @signals.Signal::new(0)
+  let f1 = @signals.memo(fn() { d.get() })
+  let f2 = @signals.memo(fn() { d.get() })
+  let f3 = @signals.memo(fn() { d.get() })
+  let g1 = @signals.memo(fn() { f1() + f2() + f3() })
+  let g2 = @signals.memo(fn() { f1() + f2() + f3() })
+  let g3 = @signals.memo(fn() { f1() + f2() + f3() })
+  let h_count = Ref(0)
+  let h = @signals.memo(fn() {
     h_count.val = h_count.val + 1
     g1() + g2() + g3()
   })
@@ -1254,20 +1252,20 @@ test "diamond: only propagates once with exponential convergence" {
 /// If a memo's computed value hasn't changed, downstream memos should not re-run
 /// Note: This library uses pull-based (lazy) evaluation, so order is outside-in (c1 then t1)
 test "diamond: does not trigger downstream unless value changed" {
-  let s1 = Signal::new(1)
+  let s1 = @signals.Signal::new(1)
   let order : Array[String] = []
-  let t1 = memo(fn() {
+  let t1 = @signals.memo(fn() {
     order.push("t1")
     s1.get()
   })
-  let c1 = memo(fn() {
+  let c1 = @signals.memo(fn() {
     order.push("c1")
     t1()
   })
 
   // Initial computation - pull-based: c1 evaluates first, then pulls t1
   let _ = c1()
-  assert_eq(order.to_string(), "[\"c1\", \"t1\"]")
+  assert_eq(order, ["c1", "t1"])
   order.clear()
 
   // Set same value - both re-evaluate on pull
@@ -1289,11 +1287,11 @@ test "diamond: does not trigger downstream unless value changed" {
 /// When a memo's dependencies change based on a condition,
 /// it should only react to active dependencies
 test "diamond: changing dependencies" {
-  let condition = Signal::new(true)
-  let true_branch = Signal::new(1)
-  let false_branch = Signal::new(2)
-  let eval_count = Ref::new(0)
-  let result = memo(fn() {
+  let condition = @signals.Signal::new(true)
+  let true_branch = @signals.Signal::new(1)
+  let false_branch = @signals.Signal::new(2)
+  let eval_count = Ref(0)
+  let result = @signals.memo(fn() {
     eval_count.val = eval_count.val + 1
     if condition.get() {
       true_branch.get()
@@ -1333,21 +1331,21 @@ test "diamond: changing dependencies" {
 /// Diamond dependency: nested memos maintain correct order
 /// Note: This library uses pull-based evaluation, so order is outside-in (level4 -> level1)
 test "diamond: nested memos maintain order" {
-  let source = Signal::new(0)
+  let source = @signals.Signal::new(0)
   let order : Array[String] = []
-  let level1 = memo(fn() {
+  let level1 = @signals.memo(fn() {
     order.push("level1")
     source.get()
   })
-  let level2 = memo(fn() {
+  let level2 = @signals.memo(fn() {
     order.push("level2")
     level1()
   })
-  let level3 = memo(fn() {
+  let level3 = @signals.memo(fn() {
     order.push("level3")
     level2()
   })
-  let level4 = memo(fn() {
+  let level4 = @signals.memo(fn() {
     order.push("level4")
     level3()
   })
@@ -1388,17 +1386,17 @@ test "diamond: nested memos maintain order" {
 /// When updating multiple signals in a batch, effects should only see
 /// the final consistent state, not intermediate states.
 test "glitch-free: batch prevents intermediate states" {
-  let a = Signal::new(1)
-  let b = Signal::new(2)
+  let a = @signals.Signal::new(1)
+  let b = @signals.Signal::new(2)
   let observations : Array[Int] = []
-  let _ = render_effect(fn() { observations.push(a.get() + b.get()) })
+  let _ = @signals.render_effect(fn() { observations.push(a.get() + b.get()) })
 
   // Initial observation
   assert_eq(observations.length(), 1)
   assert_eq(observations[0], 3)
 
   // Batch update - should only observe final state
-  batch(fn() {
+  @signals.batch(fn() {
     a.set(10)
     b.set(20)
   })
@@ -1415,10 +1413,10 @@ test "glitch-free: batch prevents intermediate states" {
 /// Setting the same signal multiple times in a batch should only
 /// trigger one recomputation with the final value.
 test "glitch-free: multiple sets in batch trigger once" {
-  let sig = Signal::new(0)
-  let compute_count = Ref::new(0)
+  let sig = @signals.Signal::new(0)
+  let compute_count = Ref(0)
   let observed_values : Array[Int] = []
-  let _ = render_effect(fn() {
+  let _ = @signals.render_effect(fn() {
     compute_count.val = compute_count.val + 1
     observed_values.push(sig.get())
   })
@@ -1428,7 +1426,7 @@ test "glitch-free: multiple sets in batch trigger once" {
   assert_eq(observed_values[0], 0)
 
   // Batch with multiple sets
-  batch(fn() {
+  @signals.batch(fn() {
     sig.set(1)
     sig.set(2)
     sig.set(3)
@@ -1445,15 +1443,15 @@ test "glitch-free: multiple sets in batch trigger once" {
 /// When reading multiple derived values, they should all reflect
 /// updates from the same "generation" of the source.
 test "glitch-free: derived values are consistent" {
-  let source = Signal::new(0)
+  let source = @signals.Signal::new(0)
 
   // Two memos derived from the same source
-  let doubled = memo(fn() { source.get() * 2 })
-  let tripled = memo(fn() { source.get() * 3 })
+  let doubled = @signals.memo(fn() { source.get() * 2 })
+  let tripled = @signals.memo(fn() { source.get() * 3 })
 
   // A memo that combines both
   let observations : Array[(Int, Int)] = []
-  let combined = memo(fn() {
+  let combined = @signals.memo(fn() {
     let d = doubled()
     let t = tripled()
     observations.push((d, t))
@@ -1480,13 +1478,13 @@ test "glitch-free: derived values are consistent" {
 /// In a diamond dependency, the bottom node should never see
 /// stale values from one branch while seeing updated values from another.
 test "glitch-free: no stale reads in diamond" {
-  let source = Signal::new(1)
+  let source = @signals.Signal::new(1)
 
   // Diamond shape: source -> left, right -> bottom
-  let left = memo(fn() { source.get() * 2 })
-  let right = memo(fn() { source.get() * 3 })
-  let inconsistent_reads = Ref::new(0)
-  let bottom = memo(fn() {
+  let left = @signals.memo(fn() { source.get() * 2 })
+  let right = @signals.memo(fn() { source.get() * 3 })
+  let inconsistent_reads = Ref(0)
+  let bottom = @signals.memo(fn() {
     let l = left()
     let r = right()
     // Check consistency: l/2 should equal r/3 (both equal source)
@@ -1518,18 +1516,20 @@ test "glitch-free: no stale reads in diamond" {
 /// An effect that reads multiple signals should see a consistent
 /// snapshot of all values.
 test "glitch-free: effect sees consistent snapshot" {
-  let x = Signal::new(0)
-  let y = Signal::new(0)
-  let z = Signal::new(0)
+  let x = @signals.Signal::new(0)
+  let y = @signals.Signal::new(0)
+  let z = @signals.Signal::new(0)
   let snapshots : Array[(Int, Int, Int)] = []
-  let _ = render_effect(fn() { snapshots.push((x.get(), y.get(), z.get())) })
+  let _ = @signals.render_effect(fn() {
+    snapshots.push((x.get(), y.get(), z.get()))
+  })
 
   // Initial snapshot
   assert_eq(snapshots.length(), 1)
   assert_eq(snapshots[0], (0, 0, 0))
 
   // Batch update all three
-  batch(fn() {
+  @signals.batch(fn() {
     x.set(1)
     y.set(2)
     z.set(3)
@@ -1545,17 +1545,17 @@ test "glitch-free: effect sees consistent snapshot" {
 ///
 /// Nested batches should defer updates until the outermost batch completes.
 test "glitch-free: nested batches" {
-  let sig = Signal::new(0)
+  let sig = @signals.Signal::new(0)
   let observations : Array[Int] = []
-  let _ = render_effect(fn() { observations.push(sig.get()) })
+  let _ = @signals.render_effect(fn() { observations.push(sig.get()) })
   assert_eq(observations.length(), 1)
 
   // Nested batches
-  batch(fn() {
+  @signals.batch(fn() {
     sig.set(1)
-    batch(fn() {
+    @signals.batch(fn() {
       sig.set(2)
-      batch(fn() { sig.set(3) })
+      @signals.batch(fn() { sig.set(3) })
       sig.set(4)
     })
     sig.set(5)
@@ -1572,14 +1572,14 @@ test "glitch-free: nested batches" {
 /// When a memo's dependencies haven't changed, it should return
 /// the cached value without recomputing.
 test "glitch-free: memo caching" {
-  let a = Signal::new(1)
-  let b = Signal::new(2)
-  let a_compute_count = Ref::new(0)
-  let a_doubled = memo(fn() {
+  let a = @signals.Signal::new(1)
+  let b = @signals.Signal::new(2)
+  let a_compute_count = Ref(0)
+  let a_doubled = @signals.memo(fn() {
     a_compute_count.val = a_compute_count.val + 1
     a.get() * 2
   })
-  let combined = memo(fn() { a_doubled() + b.get() })
+  let combined = @signals.memo(fn() { a_doubled() + b.get() })
 
   // Initial computation
   assert_eq(combined(), 4) // 2 + 2
@@ -1604,11 +1604,11 @@ test "glitch-free: memo caching" {
 /// When dependencies change based on conditions, the system should
 /// handle transitions correctly without glitches.
 test "glitch-free: conditional dependency transitions" {
-  let use_a = Signal::new(true)
-  let a = Signal::new(10)
-  let b = Signal::new(20)
+  let use_a = @signals.Signal::new(true)
+  let a = @signals.Signal::new(10)
+  let b = @signals.Signal::new(20)
   let observations : Array[Int] = []
-  let result = memo(fn() {
+  let result = @signals.memo(fn() {
     let val = if use_a.get() { a.get() } else { b.get() }
     observations.push(val)
     val
@@ -1637,13 +1637,13 @@ test "glitch-free: conditional dependency transitions" {
 /// When an effect updates a signal that other effects depend on,
 /// the updates should be properly ordered.
 test "glitch-free: cross-dependency updates" {
-  let source = Signal::new(0)
-  let derived = Signal::new(0)
+  let source = @signals.Signal::new(0)
+  let derived = @signals.Signal::new(0)
 
   // Effect that derives value from source
-  let _ = render_effect(fn() { derived.set(source.get() * 2) })
+  let _ = @signals.render_effect(fn() { derived.set(source.get() * 2) })
   let observations : Array[Int] = []
-  let _ = render_effect(fn() { observations.push(derived.get()) })
+  let _ = @signals.render_effect(fn() { observations.push(derived.get()) })
 
   // Initial: source=0, derived=0
   assert_eq(observations.length(), 1)

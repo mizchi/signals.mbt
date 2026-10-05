@@ -41,8 +41,8 @@ pub fn render_effect(fn_ : () -> Unit) -> () -> Unit {
 /// Returns a dispose function to stop the effect.
 /// Unlike `render_effect`, this runs asynchronously via microtask queue.
 pub fn effect(fn_ : () -> Unit) -> () -> Unit {
-  let active = Ref::new(true)
-  let dispose_ref : Ref[(() -> Unit)?] = Ref::new(None)
+  let active = Ref(true)
+  let dispose_ref : Ref[(() -> Unit)?] = Ref(None)
   let cleanups : Array[() -> Unit] = []
 
   // Wrap function to enable signal's on_cleanup tracking
@@ -92,7 +92,7 @@ pub fn effect_when(condition : () -> Bool, fn_ : () -> Unit) -> () -> Unit {
 /// Create a one-time effect that disposes itself after first run.
 /// Useful for initialization logic that should only run once.
 pub fn effect_once(fn_ : () -> Unit) -> Unit {
-  let dispose : Ref[(() -> Unit)?] = Ref::new(None)
+  let dispose : Ref[(() -> Unit)?] = Ref(None)
   dispose.val = Some(
     render_effect(fn() {
       fn_()

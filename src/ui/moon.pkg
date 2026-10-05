@@ -1,3 +1,5 @@
-options(
-  "supported-targets": [ "js", "wasm-gc", "native" ],
-)
+supported_targets = "js + wasm-gc + native"
+
+import {
+  "moonbitlang/core/debug",
+} for "test"

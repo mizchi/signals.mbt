@@ -14,7 +14,6 @@ test "dyn: direct function call (1000 reads)" (b : @bench.T) {
   b.bench(fn() {
     for i = 0; i < 1000; i = i + 1 {
       let _ = getter()
-
     }
   })
 }
@@ -25,7 +24,6 @@ test "dyn: Signal.get (1000 reads)" (b : @bench.T) {
   b.bench(fn() {
     for i = 0; i < 1000; i = i + 1 {
       let _ = sig.get()
-
     }
   })
 }
@@ -36,7 +34,6 @@ test "dyn: Signal.peek (1000 reads, no tracking)" (b : @bench.T) {
   b.bench(fn() {
     for i = 0; i < 1000; i = i + 1 {
       let _ = sig.peek()
-
     }
   })
 }
@@ -49,7 +46,6 @@ test "dyn: wrapped Signal in closure (1000 reads)" (b : @bench.T) {
   b.bench(fn() {
     for i = 0; i < 1000; i = i + 1 {
       let _ = getter()
-
     }
   })
 }
@@ -74,7 +70,6 @@ test "dyn: computed function (1000 reads)" (b : @bench.T) {
   b.bench(fn() {
     for i = 0; i < 1000; i = i + 1 {
       let _ = class_getter()
-
     }
   })
 }
@@ -94,7 +89,6 @@ test "dyn: memo computed (1000 reads)" (b : @bench.T) {
   b.bench(fn() {
     for i = 0; i < 1000; i = i + 1 {
       let _ = class_memo()
-
     }
   })
 }
@@ -124,7 +118,6 @@ test "api: () -> String parameter (1000 calls)" (b : @bench.T) {
   b.bench(fn() {
     for i = 0; i < 1000; i = i + 1 {
       let _ = apply_dyn_getter(getter)
-
     }
   })
 }
@@ -135,7 +128,6 @@ test "api: Signal[String] parameter (1000 calls)" (b : @bench.T) {
   b.bench(fn() {
     for i = 0; i < 1000; i = i + 1 {
       let _ = apply_dyn_signal(sig)
-
     }
   })
 }
@@ -151,7 +143,6 @@ test "dyn bool: () -> Bool (1000 reads)" (b : @bench.T) {
   b.bench(fn() {
     for i = 0; i < 1000; i = i + 1 {
       let _ = getter()
-
     }
   })
 }
@@ -162,7 +153,6 @@ test "dyn bool: Signal[Bool].get (1000 reads)" (b : @bench.T) {
   b.bench(fn() {
     for i = 0; i < 1000; i = i + 1 {
       let _ = sig.get()
-
     }
   })
 }

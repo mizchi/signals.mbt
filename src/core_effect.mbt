@@ -3,7 +3,7 @@
 // Cleanup tracking for core effects
 
 ///|
-let core_current_cleanups : Ref[Array[() -> Unit]?] = Ref::new(None)
+let core_current_cleanups : Ref[Array[() -> Unit]?] = Ref(None)
 
 ///|
 /// Create a synchronous effect (runs immediately) - internal implementation
@@ -96,6 +96,5 @@ fn cleanup_effect_node(node : ReactiveNode) -> Unit {
   // Unlink from parent if any
   if node.subs is Some(sub) {
     let _ = unlink(sub, sub.sub)
-
   }
 }

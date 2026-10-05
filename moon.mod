@@ -1,0 +1,15 @@
+name = "mizchi/signals"
+
+version = "0.6.4"
+
+readme = "README.md"
+
+repository = "https://github.com/mizchi/signals"
+
+license = "MIT"
+
+keywords = [ "signals", "reactive", "alien-signals", "ui", "vnode" ]
+
+description = "Fine-grained reactive signals for MoonBit (alien-signals inspired)"
+
+source = "src"

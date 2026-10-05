@@ -4,7 +4,11 @@
 ///|
 /// Create a memoized computed value (internal)
 fn[T] create_computed(getter : () -> T) -> Computed[T] {
-  { node: ReactiveNode::new(ReactiveFlags::None.to_int()), value: None, getter }
+  {
+    node: ReactiveNode::new(ReactiveFlags::None.to_int()),
+    value: None,
+    getter,
+  }
 }
 
 ///|
@@ -74,7 +78,7 @@ fn[T] update_computed(c : Computed[T]) -> Bool {
   )
   purge_deps(c.node)
   match old_value {
-    Some(old) => not(physical_equal(old, new_value))
+    Some(old) => !physical_equal(old, new_value)
     None => true
   }
 }

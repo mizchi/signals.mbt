@@ -2,7 +2,7 @@
 
 ///|
 /// Global effect ID counter
-let effect_id_counter : Ref[Int] = Ref::new(0)
+let effect_id_counter : Ref[Int] = Ref(0)
 
 ///|
 /// Generate a new unique effect ID

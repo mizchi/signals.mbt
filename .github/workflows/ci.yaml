@@ -9,6 +9,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [wasm-gc, js, native]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -19,8 +22,11 @@ jobs:
       - name: Moon update
         run: moon update
       - name: Moon check
-        run: moon check --deny-warn
+        run: moon check --deny-warn --target ${{ matrix.target }}
+      - name: Moon build
+        run: moon build --deny-warn --target ${{ matrix.target }}
       - name: Moon test
-        run: moon test
+        run: moon test --target ${{ matrix.target }}
       - name: Moon bench
+        if: matrix.target == 'wasm-gc'
         run: moon bench

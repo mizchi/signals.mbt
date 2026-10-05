@@ -35,7 +35,7 @@ pub(all) struct Flags {
 
 ///|
 pub fn Flags::new(initial : Int) -> Flags {
-  { value: initial }
+  { value: initial, }
 }
 
 ///|

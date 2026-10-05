@@ -4,19 +4,19 @@
 // Global state using Ref for mutability
 
 ///|
-let cycle : Ref[Int] = Ref::new(0)
+let cycle : Ref[Int] = Ref(0)
 
 ///|
-let batch_depth : Ref[Int] = Ref::new(0)
+let batch_depth : Ref[Int] = Ref(0)
 
 ///|
-let notify_index : Ref[Int] = Ref::new(0)
+let notify_index : Ref[Int] = Ref(0)
 
 ///|
-let queued_length : Ref[Int] = Ref::new(0)
+let queued_length : Ref[Int] = Ref(0)
 
 ///|
-let active_sub : Ref[ReactiveNode?] = Ref::new(None)
+let active_sub : Ref[ReactiveNode?] = Ref(None)
 
 // Effect queue (fixed-size array for simplicity)
 
@@ -192,7 +192,7 @@ pub fn unlink(lnk : Link, sub : ReactiveNode) -> Link? {
 fn unwatched(node : ReactiveNode) -> Unit {
   let flags = node.flags.get_value()
   let is_mutable = (flags & ReactiveFlags::Mutable.to_int()) != 0
-  if not(is_mutable) {
+  if !is_mutable {
     // Effect scope - clean up
     cleanup_node(node)
   } else if node.deps_tail is Some(_) {
@@ -213,7 +213,6 @@ fn cleanup_node(node : ReactiveNode) -> Unit {
   purge_deps(node)
   if node.subs is Some(sub) {
     let _ = unlink(sub, sub.sub)
-
   }
 }
 
@@ -236,8 +235,8 @@ pub fn purge_deps(sub : ReactiveNode) -> Unit {
 ///|
 /// Propagate changes through the dependency graph (simplified version)
 pub fn propagate(start_link : Link) -> Unit {
-  let link_ref : Ref[Link?] = Ref::new(Some(start_link))
-  let next_ref : Ref[Link?] = Ref::new(start_link.next_sub)
+  let link_ref : Ref[Link?] = Ref(Some(start_link))
+  let next_ref : Ref[Link?] = Ref(start_link.next_sub)
   let stack : Array[(Link?, Link?)] = []
   let mut running = true
   while running {
@@ -419,7 +418,7 @@ fn notify_effect(node : ReactiveNode) -> Unit {
         break
       }
     }
-    if not(already_queued) {
+    if !already_queued {
       callback_queue.push(callback)
       callback_queue_nodes.push(node)
       node.flags.unset(Watching)

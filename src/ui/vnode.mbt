@@ -15,7 +15,7 @@ pub struct EventHandler[E] {
 ///|
 /// Create an event handler from a callback.
 pub fn[E] handler(f : (E) -> Unit) -> EventHandler[E] {
-  { callback: f }
+  { callback: f, }
 }
 
 ///|
@@ -104,7 +104,7 @@ pub fn[E, A] h(
   attrs : Array[(String, Attr[E, A])],
   children : Array[Node[E, A]],
 ) -> Node[E, A] {
-  Element({ tag, attrs, children })
+  Element({ tag, attrs, children, })
 }
 
 ///|
@@ -156,7 +156,7 @@ pub fn[E, A] async_(
   fallback~ : () -> Node[E, A],
   on_error? : ((Error) -> Node[E, A])? = None,
 ) -> Node[E, A] {
-  Async({ render, fallback, on_error })
+  Async({ render, fallback, on_error, })
 }
 
 ///|
@@ -165,7 +165,7 @@ pub fn[E, A] error_boundary(
   children~ : () -> Node[E, A] raise,
   fallback~ : (Error, () -> Unit) -> Node[E, A] raise,
 ) -> Node[E, A] {
-  ErrorBoundary({ children, fallback })
+  ErrorBoundary({ children, fallback, })
 }
 
 ///|
@@ -174,7 +174,7 @@ pub fn[E, A] match_case(
   when~ : () -> Bool,
   render~ : () -> Node[E, A],
 ) -> MatchCase[E, A] {
-  { when, render }
+  { when, render, }
 }
 
 ///|
@@ -183,7 +183,7 @@ pub fn[E, A] switch_(
   cases~ : Array[MatchCase[E, A]],
   fallback? : (() -> Node[E, A])? = None,
 ) -> Node[E, A] {
-  Switch({ cases, fallback })
+  Switch({ cases, fallback, })
 }
 
 // =============================================================================

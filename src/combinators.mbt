@@ -75,7 +75,7 @@ pub fn[A, B, C, D, R] combine4(
 pub fn all(signals : Array[Signal[Bool]]) -> () -> Bool {
   memo(fn() {
     for sig in signals {
-      if not(sig.get()) {
+      if !sig.get() {
         break false
       }
     } nobreak {

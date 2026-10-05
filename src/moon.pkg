@@ -2,6 +2,10 @@ import {
   "moonbitlang/core/bench",
 }
 
+import {
+  "moonbitlang/core/debug",
+} for "test"
+
 options(
   targets: { "effect_js.mbt": [ "js" ], "effect_non_js.mbt": [ "not", "js" ] },
 )
