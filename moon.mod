@@ -1,6 +1,6 @@
 name = "mizchi/signals"
 
-version = "0.6.4"
+version = "0.6.6"
 
 readme = "README.md"
 
